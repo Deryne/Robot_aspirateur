@@ -19,11 +19,21 @@
                 env.CreerEnv();
                 env.AfficherEnv();
 
-                Capteur capteur = new Capteur();
-                capteur.ObserveEnv(env.manoir);
+                
+                //Copie de l'environnement
+                aspi.capteur.ObserveEnv(env.manoir);
+
+                //Choisir une action
+                //Exploration en BFS pour l'exploration non informé
+
+                //choisir une action
+                //Exploration informé
+
+
+
 
                 
-
+                //on arrête le while
                 Aspirateur.isRunning = false;
 
             }
@@ -150,26 +160,55 @@ class Aspirateur
 
     int unite_elec;//Cout
 
-    bool exploration_informe; //True pour informé et false pour non informé
+    public bool exploration_informe; //True pour informé et false pour non informé
 
     int mesure_perf;
 
     public static bool isRunning;
 
-    public Case[,] desire = new Case[5, 5];
+    public Case[,] desir = new Case[5, 5];
 
     //Capteurs.
-    Capteur capteur = new Capteur();
+    public Capteur capteur = new Capteur();
 
     //Effecteurs.
-
-    //BDI
+    public Effecteur effecteur = new Effecteur();   
 
     //Constructeur
     public Aspirateur(int param_posX, int paramPosY) 
     {
         posX = param_posX;
         posY = paramPosY;
+    }
+
+    public void DesirFonction(Case[,] desire)
+    {
+        for (int i = 0; i < 5; i++)
+        {
+            for (int j = 0; j < 5; j++)
+            {
+                desir[i,j] = new Case();
+                desir[i,j].poussieres = false;
+                desir[i,j].bijoux = false;
+            }
+        }
+    }
+
+    public void Rammasser(Case param_case)
+    {
+        param_case.bijoux = false;
+        unite_elec = unite_elec - 1;
+    }
+
+    public void Aspirer(Case param_case)
+    {
+        param_case.poussieres = false;
+        if (param_case.bijoux)
+        {
+            param_case.bijoux = false;
+            //MALUS ici 
+        }
+        unite_elec = unite_elec - 1;
     }
 
     public void Up()
@@ -239,7 +278,7 @@ class Capteur
 
 class Effecteur 
 {
-
+    public Effecteur() { }
 }
 
 
