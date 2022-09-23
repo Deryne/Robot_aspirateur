@@ -18,13 +18,13 @@ C:\Users\deryn\OneDrive - Université du Québec à Chicoutimi\Robot_aspirateur\
 C:\Users\deryn\OneDrive - Université du Québec à Chicoutimi\Robot_aspirateur\Robot_aspirateur\obj\Debug\net6.0\Robot_aspirateur.AssemblyInfoInputs.cache
 C:\Users\deryn\OneDrive - Université du Québec à Chicoutimi\Robot_aspirateur\Robot_aspirateur\obj\Debug\net6.0\Robot_aspirateur.AssemblyInfo.cs
 C:\Users\deryn\OneDrive - Université du Québec à Chicoutimi\Robot_aspirateur\Robot_aspirateur\obj\Debug\net6.0\Robot_aspirateur.csproj.CoreCompileInputs.cache
-C:\Users\deryn\OneDrive - Université du Québec à Chicoutimi\Robot_aspirateur\Robot_aspirateur\obj\Debug\net6.0\Robot_aspirateur.dll
-C:\Users\deryn\OneDrive - Université du Québec à Chicoutimi\Robot_aspirateur\Robot_aspirateur\obj\Debug\net6.0\refint\Robot_aspirateur.dll
-C:\Users\deryn\OneDrive - Université du Québec à Chicoutimi\Robot_aspirateur\Robot_aspirateur\obj\Debug\net6.0\Robot_aspirateur.pdb
 C:\Users\deryn\OneDrive - Université du Québec à Chicoutimi\Robot_aspirateur\Robot_aspirateur\bin\Debug\net6.0\Robot_aspirateur.exe
 C:\Users\deryn\OneDrive - Université du Québec à Chicoutimi\Robot_aspirateur\Robot_aspirateur\bin\Debug\net6.0\Robot_aspirateur.deps.json
 C:\Users\deryn\OneDrive - Université du Québec à Chicoutimi\Robot_aspirateur\Robot_aspirateur\bin\Debug\net6.0\Robot_aspirateur.runtimeconfig.json
 C:\Users\deryn\OneDrive - Université du Québec à Chicoutimi\Robot_aspirateur\Robot_aspirateur\bin\Debug\net6.0\Robot_aspirateur.dll
 C:\Users\deryn\OneDrive - Université du Québec à Chicoutimi\Robot_aspirateur\Robot_aspirateur\bin\Debug\net6.0\Robot_aspirateur.pdb
+C:\Users\deryn\OneDrive - Université du Québec à Chicoutimi\Robot_aspirateur\Robot_aspirateur\obj\Debug\net6.0\Robot_aspirateur.dll
+C:\Users\deryn\OneDrive - Université du Québec à Chicoutimi\Robot_aspirateur\Robot_aspirateur\obj\Debug\net6.0\refint\Robot_aspirateur.dll
+C:\Users\deryn\OneDrive - Université du Québec à Chicoutimi\Robot_aspirateur\Robot_aspirateur\obj\Debug\net6.0\Robot_aspirateur.pdb
 C:\Users\deryn\OneDrive - Université du Québec à Chicoutimi\Robot_aspirateur\Robot_aspirateur\obj\Debug\net6.0\Robot_aspirateur.genruntimeconfig.cache
 C:\Users\deryn\OneDrive - Université du Québec à Chicoutimi\Robot_aspirateur\Robot_aspirateur\obj\Debug\net6.0\ref\Robot_aspirateur.dll
