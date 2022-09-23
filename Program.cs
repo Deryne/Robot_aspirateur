@@ -2,11 +2,33 @@
     {
         static void Main()
         {
-            Console.WriteLine("Creation Environnement");
+            Console.WriteLine("Creation Environnement vide");
             Environnement env = new Environnement(5,5);
 
-            env.CreerEnv();
-            env.AfficherEnv();
+            env.CreerEnvVide();
+
+            Aspirateur aspi = new Aspirateur(0,0);
+            Aspirateur.isRunning = true;
+            
+
+            //while robot marche
+
+            while (Aspirateur.isRunning)
+            {
+                Console.WriteLine("Création environnement rempli");
+                env.CreerEnv();
+                env.AfficherEnv();
+
+                Capteur capteur = new Capteur();
+                capteur.ObserveEnv(env.manoir);
+
+                
+
+                Aspirateur.isRunning = false;
+
+            }
+
+
             
 
         }
@@ -20,9 +42,10 @@ class Case
         public bool poussieres; //Il peut y avoir de la poussière dedans (aussi)
 
         //Définition des coorodnnées dans un constructeur
-        public Case(){
-        bijoux = false;
-        poussieres = false;
+        public Case()
+        {
+            bijoux = false;
+            poussieres = false;
         }
 
 }
@@ -41,10 +64,18 @@ class Environnement
         {
             NbBijoux = bijoux_param;
             NbPoussieres = poussieres_param;
-
-
         }
 
+        public void CreerEnvVide()
+        {
+            for (int i = 0; i < 5; i++)
+            {
+                for (int j = 0; j < 5; j++)
+                {
+                manoir[i,j] = new Case();
+                }
+            }
+        }
 
         public void CreerEnv()
         {
@@ -52,7 +83,6 @@ class Environnement
             {
                 for (int j = 0; j < 5; j++)
                 {
-                manoir[i,j] = new Case();
 
                 Random random = new Random();
 
@@ -77,7 +107,7 @@ class Environnement
 
         public void AfficherEnv()
         {
-            
+        Console.WriteLine("Affichage du terrain");
 
             for (int i = 0; i < 5; i++)
             {
@@ -86,26 +116,26 @@ class Environnement
                 
                 if (manoir[i,j].bijoux == true && manoir[i,j].poussieres == false)
                 {
-                    Console.WriteLine(" B ");
+                    Console.Write(" B ");
                 }
                 if (manoir[i,j].bijoux == true && manoir[i,j].poussieres == true)
                 {
-                   Console.WriteLine(" X ");
+                   Console.Write(" X ");
                 }
 
                 if (manoir[i,j].bijoux == false && manoir[i,j].poussieres == true)
                 {
-                   Console.WriteLine(" P ");
+                   Console.Write(" P ");
                 }
 
                 if (manoir[i,j].bijoux == false && manoir[i,j].poussieres == false)
                 {
-                    Console.WriteLine(" O ");
+                    Console.Write(" O ");
                 }
 
                 }
 
-                Console.WriteLine('\n');
+                Console.Write('\n');
 
             }
         }
@@ -113,6 +143,104 @@ class Environnement
 
 }
 
+class Aspirateur
+{
+    int posX;
+    int posY;
+
+    int unite_elec;//Cout
+
+    bool exploration_informe; //True pour informé et false pour non informé
+
+    int mesure_perf;
+
+    public static bool isRunning;
+
+    public Case[,] desire = new Case[5, 5];
+
+    //Capteurs.
+    Capteur capteur = new Capteur();
+
+    //Effecteurs.
+
+    //BDI
+
+    //Constructeur
+    public Aspirateur(int param_posX, int paramPosY) 
+    {
+        posX = param_posX;
+        posY = paramPosY;
+    }
+
+    public void Up()
+    {
+        if(posY > 0)
+        {
+            posY = posY - 1;
+            unite_elec = unite_elec - 1;
+        }
+    }
+
+    public void Down()
+    {
+        if(posY == 0)
+        {
+            posY = posY + 1;
+            unite_elec = unite_elec - 1;
+        }
+    }
+
+    public void Left()
+    {
+        if(posX > 0)
+        {
+            posX = posX - 1;
+            unite_elec = unite_elec - 1;
+        }
+    }
+
+    public void Right()
+    {
+        if(posX < 5)
+        {
+            posX = posX + 1;
+            unite_elec = unite_elec - 1;
+        }
+    }
+}
+
+
+class Capteur
+{
+
+    public Case[,] beliefs = new Case[5, 5];
+
+    public Capteur() { }
+
+    public Capteur(Case[,] param_manoir)
+    {
+        ObserveEnv(param_manoir);
+    }
+   
+    //Beliefs = observation de l'env
+    public void ObserveEnv(Case[,] param_manoir)
+    {
+        for (int i = 0; i < 5; i++)
+        {
+            for (int j = 0; j < 5; j++)
+            {
+                beliefs[i,j] = new Case();
+                beliefs[i,j] = param_manoir[i,j];
+            }
+        }
+    }
+}
+
+
+class Effecteur 
+{
+
+}
 
 
 
