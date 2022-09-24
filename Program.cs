@@ -1,98 +1,97 @@
 ﻿class Program
+{
+    static void Main()
     {
-        static void Main()
+        Console.WriteLine("Creation Environnement vide");
+        Environnement env = new Environnement(5, 5);
+
+        Aspirateur aspi = new Aspirateur(0, 0);
+        Aspirateur.isRunning = true;
+
+
+        //while robot marche
+
+        while (Aspirateur.isRunning)
         {
-            Console.WriteLine("Creation Environnement vide");
-            Environnement env = new Environnement(5,5);
+            Console.WriteLine("Création environnement rempli");
+            env.GenererObstacles();
+            env.AfficherEnv();
 
-            env.CreerEnvVide();
 
-            Aspirateur aspi = new Aspirateur(0,0);
-            Aspirateur.isRunning = true;
-            
+            //Copie de l'environnement
+            aspi.capteur.ObserveEnv(env.manoir);
 
-            //while robot marche
+            //Choisir une action
+            //Exploration en BFS pour l'exploration non informé
 
-            while (Aspirateur.isRunning)
-            {
-                Console.WriteLine("Création environnement rempli");
-                env.CreerEnv();
-                env.AfficherEnv();
-
-                
-                //Copie de l'environnement
-                aspi.capteur.ObserveEnv(env.manoir);
-
-                //Choisir une action
-                //Exploration en BFS pour l'exploration non informé
-
-                //choisir une action
-                //Exploration informé
+            //choisir une action
+            //Exploration informé
 
 
 
 
-                
-                //on arrête le while
-                Aspirateur.isRunning = false;
 
-            }
-
-
-            
+            //on arrête le while
+            Aspirateur.isRunning = false;
 
         }
+
+
+
+
+    }
 }
 
 
 class Case
 {
-        //Proprités de la pièce ici appelée "case"
-        public bool bijoux; // Il peut y avoir un bijoux dedans
-        public bool poussieres; //Il peut y avoir de la poussière dedans (aussi)
+    //Proprités de la pièce ici appelée "case"
+    public bool bijoux; // Il peut y avoir un bijoux dedans
+    public bool poussieres; //Il peut y avoir de la poussière dedans (aussi)
 
-        //Définition des coorodnnées dans un constructeur
-        public Case()
-        {
-            bijoux = false;
-            poussieres = false;
-        }
+    //Définition des coorodnnées dans un constructeur
+    public Case()
+    {
+        bijoux = false;
+        poussieres = false;
+    }
 
 }
 
 
 class Environnement
 {
-        //L'environement est composé de 25 cases avec des propriétés      
-        public Case[,] manoir = new Case[5, 5];
+    //L'environement est composé de 25 cases avec des propriétés      
+    public Case[,] manoir = new Case[5, 5];
 
-        public int NbBijoux;//Limite bijoux
+    public int NbBijoux;//Limite bijoux
 
-        public int NbPoussieres;//Limite poussière
+    public int NbPoussieres;//Limite poussière
 
-        public Environnement(int bijoux_param, int poussieres_param)
+    public Environnement(int bijoux_param, int poussieres_param)
+    {
+        NbBijoux = bijoux_param;
+        NbPoussieres = poussieres_param;
+        CreerEnvVide();
+    }
+
+    public void CreerEnvVide()
+    {
+        for (int i = 0; i < 5; i++)
         {
-            NbBijoux = bijoux_param;
-            NbPoussieres = poussieres_param;
-        }
-
-        public void CreerEnvVide()
-        {
-            for (int i = 0; i < 5; i++)
+            for (int j = 0; j < 5; j++)
             {
-                for (int j = 0; j < 5; j++)
-                {
-                manoir[i,j] = new Case();
-                }
+                manoir[i, j] = new Case();
             }
         }
+    }
 
-        public void CreerEnv()
+    public void GenererObstacles()
+    {
+        for (int i = 0; i < 5; i++)
         {
-            for (int i = 0; i < 5; i++)
+            for (int j = 0; j < 5; j++)
             {
-                for (int j = 0; j < 5; j++)
-                {
 
                 Random random = new Random();
 
@@ -100,55 +99,50 @@ class Environnement
                 if ((random.Next(100) < 30) && (NbPoussieres > 0))
                 {
 
-                   manoir[i,j].poussieres = true; 
-                   NbPoussieres = NbPoussieres - 1;
+                    manoir[i, j].poussieres = true;
+                    NbPoussieres -= 1;
                 }
 
                 if ((random.Next(100) < 20) && (NbBijoux > 0))
                 {
-                   manoir[i,j].bijoux = true; 
-                   NbBijoux = NbBijoux - 1;
+                    manoir[i, j].bijoux = true;
+                    NbBijoux -= 1;
                 }
 
 
-                }
             }
         }
+    }
 
-        public void AfficherEnv()
-        {
+    public void AfficherEnv()
+    {
         Console.WriteLine("Affichage du terrain");
 
-            for (int i = 0; i < 5; i++)
+        for (int i = 0; i < 5; i++)
+        {
+            for (int j = 0; j < 5; j++)
             {
-                for (int j = 0; j < 5; j++)
+                switch ((manoir[i,j].bijoux, manoir[i, j].poussieres))
                 {
-                
-                if (manoir[i,j].bijoux == true && manoir[i,j].poussieres == false)
-                {
-                    Console.Write(" B ");
+                    case(true, false):
+                        Console.Write(" B ");
+                        break;
+                    case (true, true):
+                        Console.Write(" X ");
+                        break;
+                    case (false, true):
+                        Console.Write(" P ");
+                        break;
+                    case (false, false):
+                        Console.Write(" O ");
+                        break;
                 }
-                if (manoir[i,j].bijoux == true && manoir[i,j].poussieres == true)
-                {
-                   Console.Write(" X ");
-                }
-
-                if (manoir[i,j].bijoux == false && manoir[i,j].poussieres == true)
-                {
-                   Console.Write(" P ");
-                }
-
-                if (manoir[i,j].bijoux == false && manoir[i,j].poussieres == false)
-                {
-                    Console.Write(" O ");
-                }
-
-                }
-
-                Console.Write('\n');
-
             }
+
+            Console.Write('\n');
+
         }
+    }
 
 
 }
@@ -172,10 +166,10 @@ class Aspirateur
     public Capteur capteur = new Capteur();
 
     //Effecteurs.
-    public Effecteur effecteur = new Effecteur();   
+    public Effecteur effecteur = new Effecteur();
 
     //Constructeur
-    public Aspirateur(int param_posX, int paramPosY) 
+    public Aspirateur(int param_posX, int paramPosY)
     {
         posX = param_posX;
         posY = paramPosY;
@@ -187,9 +181,9 @@ class Aspirateur
         {
             for (int j = 0; j < 5; j++)
             {
-                desir[i,j] = new Case();
-                desir[i,j].poussieres = false;
-                desir[i,j].bijoux = false;
+                desir[i, j] = new Case();
+                desir[i, j].poussieres = false;
+                desir[i, j].bijoux = false;
             }
         }
     }
@@ -213,7 +207,7 @@ class Aspirateur
 
     public void Up()
     {
-        if(posY > 0)
+        if (posY > 0)
         {
             posY = posY - 1;
             unite_elec = unite_elec - 1;
@@ -222,7 +216,7 @@ class Aspirateur
 
     public void Down()
     {
-        if(posY == 0)
+        if (posY == 0)
         {
             posY = posY + 1;
             unite_elec = unite_elec - 1;
@@ -231,7 +225,7 @@ class Aspirateur
 
     public void Left()
     {
-        if(posX > 0)
+        if (posX > 0)
         {
             posX = posX - 1;
             unite_elec = unite_elec - 1;
@@ -240,7 +234,7 @@ class Aspirateur
 
     public void Right()
     {
-        if(posX < 5)
+        if (posX < 5)
         {
             posX = posX + 1;
             unite_elec = unite_elec - 1;
@@ -260,7 +254,7 @@ class Capteur
     {
         ObserveEnv(param_manoir);
     }
-   
+
     //Beliefs = observation de l'env
     public void ObserveEnv(Case[,] param_manoir)
     {
@@ -268,15 +262,15 @@ class Capteur
         {
             for (int j = 0; j < 5; j++)
             {
-                beliefs[i,j] = new Case();
-                beliefs[i,j] = param_manoir[i,j];
+                beliefs[i, j] = new Case();         //Pourquoi créer une instance de case() si on ne l'utilise pas ? 
+                beliefs[i, j] = param_manoir[i, j];
             }
         }
     }
 }
 
 
-class Effecteur 
+class Effecteur
 {
     public Effecteur() { }
 }

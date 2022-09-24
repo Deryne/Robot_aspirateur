@@ -28,3 +28,6 @@ C:\Users\deryn\OneDrive - Université du Québec à Chicoutimi\Robot_aspirateur\
 C:\Users\deryn\OneDrive - Université du Québec à Chicoutimi\Robot_aspirateur\Robot_aspirateur\obj\Debug\net6.0\Robot_aspirateur.pdb
 C:\Users\deryn\OneDrive - Université du Québec à Chicoutimi\Robot_aspirateur\Robot_aspirateur\obj\Debug\net6.0\Robot_aspirateur.genruntimeconfig.cache
 C:\Users\deryn\OneDrive - Université du Québec à Chicoutimi\Robot_aspirateur\Robot_aspirateur\obj\Debug\net6.0\ref\Robot_aspirateur.dll
+C:\Users\julien\Documents\GitHub\Robot_aspirateur\obj\Debug\net6.0\Robot_aspirateur.dll
+C:\Users\julien\Documents\GitHub\Robot_aspirateur\obj\Debug\net6.0\refint\Robot_aspirateur.dll
+C:\Users\julien\Documents\GitHub\Robot_aspirateur\obj\Debug\net6.0\Robot_aspirateur.pdb
