@@ -1,43 +1,26 @@
-﻿class Program
+﻿using System.Threading.Tasks;
+using System.Threading;
+using System;
+using System;
+using System.Collections.Generic;
+using System.Text;
+using System.Threading;
+
+public class Program
 {
-    static void Main()
+    public void Main()
     {
         Console.WriteLine("Creation Environnement vide");
         Environnement env = new Environnement(5, 5);
 
         Aspirateur aspi = new Aspirateur(0, 0);
-        Aspirateur.isRunning = true;
 
+        // Lance les 2 fils d'execution
+        Task task1 = Task.Factory.StartNew(() => env.runEnv());
+        Task task2 = Task.Factory.StartNew(() => aspi.runAspi(env));
 
-        //while robot marche
-
-        while (Aspirateur.isRunning)
-        {
-            Console.WriteLine("Création environnement rempli");
-            env.GenererObstacles();
-            env.AfficherEnv();
-
-
-            //Copie de l'environnement
-            aspi.capteur.ObserveEnv(env.manoir);
-
-            //Choisir une action
-            //Exploration en BFS pour l'exploration non informé
-
-            //choisir une action
-            //Exploration informé
-
-
-
-
-
-            //on arrête le while
-            Aspirateur.isRunning = false;
-
-        }
-
-
-
+        // Attend 20 secondes avant de terminer l'experience
+        Thread.Sleep(20 * 1000);
 
     }
 }
@@ -49,13 +32,20 @@ class Case
     public bool bijoux; // Il peut y avoir un bijoux dedans
     public bool poussieres; //Il peut y avoir de la poussière dedans (aussi)
 
+    public double distance; //permet de choisir les cases à visiter en priorite
+    public int x; // Permet de calculer la distance, sera utile pour A*
+    public int y;
+
     //Définition des coorodnnées dans un constructeur
-    public Case()
+    public Case(int xparam, int yparam)
     {
         bijoux = false;
         poussieres = false;
-    }
 
+        this.x = xparam;
+        this.y = yparam;
+
+    }
 }
 
 
@@ -67,6 +57,10 @@ class Environnement
     public int NbBijoux;//Limite bijoux
 
     public int NbPoussieres;//Limite poussière
+
+    public double Performance; //Score de performance du robot
+
+    public int CompteurElec; // Compteur electrique, 1 par action du robot
 
     public Environnement(int bijoux_param, int poussieres_param)
     {
@@ -81,7 +75,7 @@ class Environnement
         {
             for (int j = 0; j < 5; j++)
             {
-                manoir[i, j] = new Case();
+                manoir[i, j] = new Case(i,j);
             }
         }
     }
@@ -122,9 +116,9 @@ class Environnement
         {
             for (int j = 0; j < 5; j++)
             {
-                switch ((manoir[i,j].bijoux, manoir[i, j].poussieres))
+                switch ((manoir[i, j].bijoux, manoir[i, j].poussieres))
                 {
-                    case(true, false):
+                    case (true, false):
                         Console.Write(" B ");
                         break;
                     case (true, true):
@@ -138,12 +132,28 @@ class Environnement
                         break;
                 }
             }
-
             Console.Write('\n');
-
         }
     }
 
+    public double MesurePerformance()
+    {
+       
+        Performance = Performance + nbCasesPropres - (CompteurElec / nbCasesPropres) - 1.5 * nbBijouxAspires;
+        // La formule à modifier peut-être, c'est pour avoir une base
+        return Performance;
+    }
+
+    public void runEnv()
+    {
+        while (true)
+        {
+            this.GenererObstacles();
+            this.AfficherEnv();
+            MesurePerformance();
+            Thread.Sleep(2000);
+        }
+    }
 
 }
 
@@ -156,11 +166,10 @@ class Aspirateur
 
     public bool exploration_informe; //True pour informé et false pour non informé
 
-    int mesure_perf;
 
     public static bool isRunning;
 
-    public Case[,] desir = new Case[5, 5];
+    List<Case> desirs = new List<Case>();
 
     //Capteurs.
     public Capteur capteur = new Capteur();
@@ -173,19 +182,6 @@ class Aspirateur
     {
         posX = param_posX;
         posY = paramPosY;
-    }
-
-    public void DesirFonction(Case[,] desire)
-    {
-        for (int i = 0; i < 5; i++)
-        {
-            for (int j = 0; j < 5; j++)
-            {
-                desir[i, j] = new Case();
-                desir[i, j].poussieres = false;
-                desir[i, j].bijoux = false;
-            }
-        }
     }
 
     public void Rammasser(Case param_case)
@@ -240,6 +236,31 @@ class Aspirateur
             unite_elec = unite_elec - 1;
         }
     }
+
+    public void runAspi(Environnement env)
+    {
+        while (true)
+        {
+            this.capteur.ObserveEnv(env);
+            this.UpdateMyState();
+            this.ChooseAnAction();
+            Thread.Sleep(2000);
+        }
+    }
+
+    public void UpdateMyState() // Mets à jour les desires
+    {
+        foreach(Case i in desirs) 
+        {
+            i.distance = Math.Sqrt(Math.Pow(i.x - this.posX, 2) + Math.Pow(i.y - posY, 2));
+        }
+        desirs = desirs.OrderBy(o => o.distance).ToList();
+
+    }
+    public void ChooseAnAction()
+    {
+        //exploration
+    }
 }
 
 
@@ -247,32 +268,34 @@ class Capteur
 {
 
     public Case[,] beliefs = new Case[5, 5];
-
+    public double performance;
     public Capteur() { }
 
-    public Capteur(Case[,] param_manoir)
+    public Capteur(Environnement env)
     {
-        ObserveEnv(param_manoir);
+        ObserveEnv(env);
     }
 
     //Beliefs = observation de l'env
-    public void ObserveEnv(Case[,] param_manoir)
+    public void ObserveEnv(Environnement env)
     {
         for (int i = 0; i < 5; i++)
         {
             for (int j = 0; j < 5; j++)
             {
-                beliefs[i, j] = new Case();         //Pourquoi créer une instance de case() si on ne l'utilise pas ? 
-                beliefs[i, j] = param_manoir[i, j];
+                beliefs[i, j] = new Case(i,j);         //Pourquoi créer une instance de case() si on ne l'utilise pas ? 
+                beliefs[i, j] = env.manoir[i, j];
             }
         }
+        performance = env.MesurePerformance();
     }
+    
 }
 
 
 class Effecteur
 {
-    public Effecteur() { }
+    public Effecteur() { } // Est ce qu'il ne faudrait pas mettre les methodes up, droite, gauche, etc dans cette classe?
 }
 
 
