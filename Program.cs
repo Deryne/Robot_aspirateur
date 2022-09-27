@@ -259,25 +259,39 @@ class Aspirateur
 
     public void UpdateMyState() // Mets à jour les desires
     {
+        // Ajout des nouveaux desirs
         foreach(Case i in capteur.beliefs)
         {
             if(i.bijoux == true || i.poussieres == true)
             {
                 desirs.Add(i);
             }
-        }
-        foreach(Case i in desirs) 
-        {
-            i.distance = Math.Sqrt(Math.Pow(i.x - this.posX, 2) + Math.Pow(i.y - posY, 2));
-        }
-        desirs = desirs.OrderBy(o => o.distance).ToList();
-
+        }        
     }
     public void ChooseAnAction()
     {
         //exploration
-        // BFS
-        Graph tree = new Graph(posX, posY, desirs);
+        if(desirs.Contains(new Case(posX, posY)))
+        {
+            Case actualCase = desirs.IndexOf(new Case(posX, posY));
+            if(actualCase.poussieres == true)
+            {
+                Rammasser(actualCase);
+            }
+            else
+            {
+                Aspirer(actualCase);
+            }
+        }
+        else
+        {
+            
+            // BFS
+            Graph tree = new Graph(posX, posY, desirs);
+            Node nexMoove = tree.RemonterArbre();
+
+
+        }
         Console.WriteLine(tree.solution.valeur);
 
     }
@@ -329,22 +343,18 @@ class Effecteur
 class Graph
 {
     //solution cherchée : manoir propre --> le robot passe sur toutes les cases 
-    public List<Node> graph;
-    public List<int[]> desirs;
-    public Node solution;
+    public List<Node> graph; //liste de nodes reliés par leur attributs parent et enfants
+    public List<Case> desirs;  // liste des cases à visiter
+    public Node solution;   // Noeud solution trouvé, il suffit ensuite de remonter le chemin grace aux attributs 
 
     public Graph(int posX, int posY, List<Case> desirsparam)
     {
         this.graph = new List<Node>();
         this.solution = null;
-        // Formatage de la liste list<case> en list<[x,y]>
-        this.desirs = new List<int[]>();
-        for(int i= 0; i < desirsparam.Count; i++)
-        {
-            this.desirs.Add( new int[] {desirsparam[i].x, desirsparam[i].y});
-        }
-        // Creation des 2 premiers etages
-        Node A = new Node(posX, posY, desirs.Count, desirs);   
+        this.desirs = desirsparam;
+
+        // Cn creer les 2 premiers etages car la fonction CreateNodes regarde la variable parent.parent
+        Node A = new Node(posX, posY, desirs);   
         if (posX > 0) { A.Enfants.Add(new Node(posX-1, posY, A)); }
         if (posX < 4) { A.Enfants.Add(new Node(posX+1, posY, A)); }
         if (posY > 0) { A.Enfants.Add(new Node(posX, posY-1, A)); }
@@ -360,13 +370,26 @@ class Graph
 
     }
 
+    public Node RemonterArbre()
+    {
+        Node solu = this.solution;
+        // Cette fonction remonte l'arbre
+        List<Node> brancheSolution = new List<Node>();
+        while(solu != null)
+        {
+            brancheSolution.Add(solu);
+            solu = solu.parent;
+        }
+        return solu;
+    }
+
 
     public Node checkSolution(List<Node> etage) 
     {
-        // Vérifie pour chaque Node si toutes les cases ont été visité
+        // Vérifie si - pour un des nodes de l'etage - toutes les cases ont été visité
         for (int i =0; i<etage.Count; i++)
         {
-            if(etage[i].casesAvisiter == 0)
+            if(etage[i].NbCasesAVisiter == 0)
             {
                 return etage[i];
             }
@@ -375,7 +398,7 @@ class Graph
     }
 
     /// <summary>
-    ///  Cette fonction génère l'arbre étage par étage jusqu'a trouver la solution
+    ///  Cette fonction récursive génère l'arbre étage par étage jusqu'a trouver la solution
     /// </summary>
     public Node BFS(List<Node> etagesup)
     {
@@ -441,38 +464,41 @@ class Graph
 class Node
 {
     public List<Node> enfants;
-    public int[] valeur;
     public Node parent;
-    public int casesAvisiter;
-    public List<int[]> desirs;
+    public int[] valeur;
+    public int NbCasesAVisiter;
+    public List<Case> desirs;
 
     public List<Node> Enfants { get { return enfants; } set{ this.enfants = value;}}
 
     public Node(int x, int y, Node parent)
     {
         this.enfants = new List<Node>();
-        this.valeur = new int[] {x,y};
         this.parent = parent;
-        this.casesAvisiter = parent.casesAvisiter;
-        this.desirs = parent.desirs;
 
+        this.valeur = new int[] {x,y};
+        this.desirs = parent.desirs;
+        
+        this.NbCasesAVisiter = parent.NbCasesAVisiter;
         if (desirs.Contains(valeur)) //C'est la fonction qui ne marche pas, ne reconnait pas les paires
         {
-            this.casesAvisiter -= 1;
+            this.NbCasesAVisiter += 1;
         }
     }
 
-    public Node(int x, int y, int casesAvisiter, List<int[]> desirs) //constructeur pour le premier Node, qui n'a pas de parent
+    public Node(int x, int y, List<Case> desirs) //constructeur pour le premier Node, qui n'a pas de parent
     {
         this.enfants = new List<Node>();
-        this.valeur = new int[] {x,y};
         this.parent = null;
-        this.casesAvisiter = casesAvisiter;
+        
+        this.valeur = new int[] {x,y};
+        this.desirs = desirs;
+
+        this.NbCasesAVisiter = desirs.Count;
         if (desirs.Contains(valeur))
         {
-            this.casesAvisiter -= 1;
+            this.NbCasesAVisiter += 1;
         }
-        this.desirs = desirs;
     }
 }
 
