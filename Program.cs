@@ -500,6 +500,9 @@ class Node
 
     public Node(int x, int y, Node parent)
     {
+
+        int cost_value;//A* ost values (g, h & f)
+
         this.enfants = new List<Node>();
         this.parent = parent;
 
@@ -513,8 +516,10 @@ class Node
         }
     }
 
+    //Constructeur 2
     public Node(int x, int y, List<Case> desirs) //constructeur pour le premier Node, qui n'a pas de parent
     {
+
         this.enfants = new List<Node>();
         this.parent = null;
         
