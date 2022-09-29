@@ -193,58 +193,7 @@ class Aspirateur
         posY = paramPosY;
     }
 
-    public void Rammasser(Case param_case)
-    {
-        param_case.bijoux = false;
-        unite_elec = unite_elec - 1;
-    }
 
-    public void Aspirer(Case param_case)
-    {
-        param_case.poussieres = false;
-        if (param_case.bijoux)
-        {
-            param_case.bijoux = false;
-            //MALUS ici 
-        }
-        unite_elec = unite_elec - 1;
-    }
-
-    public void Up()
-    {
-        if (posY > 0)
-        {
-            posY = posY - 1;
-            unite_elec = unite_elec - 1;
-        }
-    }
-
-    public void Down()
-    {
-        if (posY == 0)
-        {
-            posY = posY + 1;
-            unite_elec = unite_elec - 1;
-        }
-    }
-
-    public void Left()
-    {
-        if (posX > 0)
-        {
-            posX = posX - 1;
-            unite_elec = unite_elec - 1;
-        }
-    }
-
-    public void Right()
-    {
-        if (posX < 5)
-        {
-            posX = posX + 1;
-            unite_elec = unite_elec - 1;
-        }
-    }
 
     public void runAspi(Environnement env)
     {
@@ -330,7 +279,60 @@ class Capteur
 
 class Effecteur
 {
-    public Effecteur() { } // Est ce qu'il ne faudrait pas mettre les methodes up, droite, gauche, etc dans cette classe? 
+    public Effecteur() { } 
+
+    public void Rammasser(Case param_case)
+    {
+        param_case.bijoux = false;
+        unite_elec = unite_elec - 1;
+    }
+
+    public void Aspirer(Case param_case)
+    {
+        param_case.poussieres = false;
+        if (param_case.bijoux)
+        {
+            param_case.bijoux = false;
+            //MALUS ici 
+        }
+        unite_elec = unite_elec - 1;
+    }
+
+    public void Up()
+    {
+        if (posY > 0)
+        {
+            posY = posY - 1;
+            unite_elec = unite_elec - 1;
+        }
+    }
+
+    public void Down()
+    {
+        if (posY == 0)
+        {
+            posY = posY + 1;
+            unite_elec = unite_elec - 1;
+        }
+    }
+
+    public void Left()
+    {
+        if (posX > 0)
+        {
+            posX = posX - 1;
+            unite_elec = unite_elec - 1;
+        }
+    }
+
+    public void Right()
+    {
+        if (posX < 5)
+        {
+            posX = posX + 1;
+            unite_elec = unite_elec - 1;
+        }
+    }
 }
 
 
@@ -471,8 +473,12 @@ class Node
 
     public List<Node> Enfants { get { return enfants; } set{ this.enfants = value;}}
 
+    //Constructeur 1
     public Node(int x, int y, Node parent)
     {
+
+        int cost_value;//A* ost values (g, h & f)
+
         this.enfants = new List<Node>();
         this.parent = parent;
 
@@ -486,8 +492,10 @@ class Node
         }
     }
 
+    //Constructeur 2
     public Node(int x, int y, List<Case> desirs) //constructeur pour le premier Node, qui n'a pas de parent
     {
+
         this.enfants = new List<Node>();
         this.parent = null;
         
@@ -499,6 +507,11 @@ class Node
         {
             this.NbCasesAVisiter += 1;
         }
+    }
+
+    public void PathFunction()
+    {
+        //will return the path from start to end node that A*
     }
 }
 
