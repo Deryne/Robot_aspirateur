@@ -8,25 +8,35 @@ using System.Threading;
 
 public class Program
 {
+    //Programme principal
     static void Main()
     {
-        Console.WriteLine("Creation Environnement vide");
+        //Initialisation d'un environnement vide
         Environnement env = new Environnement(5, 5);
-        env.GenererObstacles();
-        Aspirateur aspi = new Aspirateur(0, 0, true);
+
+        //Création d'un robot aspirateur
+        Aspirateur aspi = new Aspirateur(0, 0, false);
         
-        
+        //Pendant que le robot fonctionne
         while (true)
         {
-            env.GenererObstacles();        
+            //Génération de premières poussières et bijoux dans l'environnement
+            env.GenererObstacles();
+            //Affichage de l'environnement 
             env.AfficherEnv(aspi);
+            //Affichage de la position du robot
             Console.WriteLine(aspi.posX.ToString()+","+aspi.posY.ToString());
             Console.ReadKey();
+            //Création d'une copie de l'environnement pour le robot
             aspi.capteur.ObserveEnv(env);
+            //
             bool manoirChanged = aspi.UpdateMyState();
+            //
             aspi.ChooseAnAction(manoirChanged);
+            //Just do it
             
         }
+        //L'environnement ne s'exécute plus donc sur un thread spécifique là ?
      /*
         // Lance les 2 fils d'execution
         Task task1 = Task.Factory.StartNew(() => env.runEnv(aspi));
@@ -38,7 +48,7 @@ public class Program
     }
 }
 
-
+//Classe Case
 class Case
 {
     //Proprités de la pièce ici appelée "case"
@@ -60,23 +70,30 @@ class Case
     }
 }
 
-
+//Classe environnement
 class Environnement
 {
     //L'environement est composé de 25 cases avec des propriétés      
     public Case[,] manoir = new Case[5, 5];
+    //Possède un nombre limmite de bijoux dedans
     public int NbBijoux;
+    //Possède un nombre limite de poussières dedans
     public int NbPoussieres;
-    public double Performance; //Score de performance du robot
+    //Score de performance du robot
+    public double Performance; 
     //public Aspirateur asp;
     //public Aspirateur Asp { get { return this.asp;} set { this.asp = value;} }
 
+    //Constructeur
     public Environnement(int bijoux_param, int poussieres_param)
     {
         NbBijoux = bijoux_param;
         NbPoussieres = poussieres_param;
+        //Création d'un manoir vide
         CreerEnvVide();
     }
+
+    //Fonction qui permet d'initialiser le manoir
     public void CreerEnvVide()
     {
         for (int i = 0; i < 5; i++)
@@ -87,37 +104,42 @@ class Environnement
             }
         }
     }
+
+    //Fonction qui génère les poussières et les bijoux
     public void GenererObstacles()
     {
         for (int i = 0; i < 5; i++)
         {
             for (int j = 0; j < 5; j++)
             {
-                Random random = new Random();
+                Random random = new Random();//Nombre random
 
+                //Chance de 2% d'avoir de la poussière
                 if ((random.Next(100) < 2) && (NbPoussieres < 25))
                 {
                     if(manoir[i, j].poussieres == false) 
                     { 
                         manoir[i, j].poussieres = true;
-                        NbPoussieres += 1;
+                        NbPoussieres += 1;//Une poussière de plus dans le manoir à aspirer
                     }
                 }
+                //Chance de 2% d'avoir un bijoux
                 if ((random.Next(100) < 2) && (NbBijoux < 25))
                 {
                     if (manoir[i,j].bijoux == false)
                     {
                         manoir[i, j].bijoux = true;
-                        NbBijoux += 1;
+                        NbBijoux += 1;//Un bijoux de plus à ramasser
                     }   
                 }
             }
         }
     }
 
+    //Fonction qui affiche l'environnement en temps réel
     public void AfficherEnv(Aspirateur asp)
     {
-        Console.WriteLine("Affichage du terrain");
+        //Console.WriteLine("Affichage du terrain");
         for (int i = 0; i < 5; i++)
         {
             for (int j = 0; j < 5; j++)
@@ -128,19 +150,19 @@ class Environnement
                 }
                 switch ((manoir[j, i].bijoux, manoir[j, i].poussieres))
                 {
-                    case (true, false):
+                    case (true, false): //Si la case possède un bijoux et pas de poussières
                         Console.ForegroundColor = ConsoleColor.Blue;
                         Console.Write(" B ");
                         break;
-                    case (true, true):
+                    case (true, true): //Si la case possède un bijoux et une poussière
                          Console.ForegroundColor = ConsoleColor.Green;
                          Console.Write(" X ");
                          break;
-                    case (false, true):
+                    case (false, true): //Si la case possède de la poussière
                         Console.ForegroundColor = ConsoleColor.Yellow;
                         Console.Write(" P ");
                         break;
-                    case (false, false):
+                    case (false, false): //Si la case ne contient rien
                         Console.Write(" O ");
                         break;
                 }
@@ -152,6 +174,7 @@ class Environnement
         }
     }
 
+    //Mesure de la performance pour l'apprentissage
     public void MesurePerformance()
     { 
         //Performance = Performance + nbCasesPropres - (CompteurElec / nbCasesPropres) - 1.5 * nbBijouxAspires;
@@ -159,6 +182,7 @@ class Environnement
         //return Performance;
     }
 
+    //Thread de l'environnement (pas utilisé ?)
     public void runEnv(Aspirateur asp)
     {
         while (true)
@@ -170,26 +194,29 @@ class Environnement
     }
 }
 
+//Classe aspirateur
 class Aspirateur
 {
-    public int posX;
-    public int posY;
-    public int compteur_elec;  //Cout
-    public bool exploration_informe; //True pour ida* et false pour bfs
-    public static bool isRunning;
+    public int posX; //Position en ligne
+    public int posY; //Position en colonne
+    public int compteur_elec;//Cout à chasue action
+    public bool exploration_informe;//True pour ida* et false pour bfs
+    //public bool isRunning;
     List<Case> desirs = new List<Case>();
     public List<Case> Desirs { get { return desirs; } }
-    public Capteur capteur = new Capteur();
-    List<Node> plan;
-    public Effecteur effector = new Effecteur();
+    public Capteur capteur = new Capteur();//Création d'un capteur pour observer l'environnement
+    List<Node> plan;//Plan d'actions de l'aspirateir
+    public Effecteur effector = new Effecteur();//Création d'un effecteur pour agir
 
+    //Constructeur
     public Aspirateur(int param_posX, int paramPosY, bool exploration_informe)
     {
-        posX = param_posX;
-        posY = paramPosY;
-        this.exploration_informe = exploration_informe;
+        posX = param_posX;//Position X
+        posY = paramPosY;//Position Y
+        this.exploration_informe = exploration_informe; //Type d'exploration
     }
 
+    //Pas utilisé aussi ?
     public void runAspi(Environnement env)
     {
         while (true)
@@ -202,9 +229,10 @@ class Aspirateur
         }
     }
 
-    public bool UpdateMyState() // Mets à jour les desires
+    // Mets à jour les desirs (intentions)
+    public bool UpdateMyState() 
     {
-        bool manoirChanged = true;
+        bool manoirChanged = true;//
         List<Case> desirsTemp = desirs.ToList();
         desirs = new List<Case>();
         foreach(Case i in capteur.beliefs)
@@ -217,9 +245,11 @@ class Aspirateur
         if(desirsTemp == desirs) { manoirChanged = false;}
         return manoirChanged;
     }
+
+    //Choix de l'action à effectuer
     public void ChooseAnAction(bool manoirChanged)
     {
-        // Verifie si le robot se trouve sur un desire
+        // Verifie si le robot se trouve sur un desir
         int index  = - 1;
         for (int i = 0; i < desirs.Count; i++)
         {
@@ -277,18 +307,23 @@ class Aspirateur
     }
 }
 
-
+//Classe capteur
 class Capteur
 {
+    //création d'une vision vide du manoir
     public Case[,] beliefs = new Case[5, 5];
     public double performance;
+
+    //Constrcteur
     public Capteur() { }
 
+    //Constructeur
     public Capteur(Environnement env)
     {
         ObserveEnv(env);
     }
 
+    //Fonction qui crée une copie du manoir à un instant t
     public void ObserveEnv(Environnement env)
     {
         for (int i = 0; i < 5; i++)
@@ -302,45 +337,57 @@ class Capteur
     }
 }
 
-
+//Classe Effecteur : permet au robot aspirateur d'effectuer des actions
 class Effecteur
 {
-    public Effecteur()
-    {
-        
-    }
+    //Constructeur vide
+    public Effecteur(){ }
+
+    //Fonction aller à gauche
     public void Left(Aspirateur aspi)
     {
+        //Vérifie si le robot n'est pas sur la première colonne
         if (aspi.posX > 0)
         {
             aspi.posX -= 1;
             aspi.compteur_elec -= 1;
         }
     }
+
+    //Fonction aller à droite
     public void Right(Aspirateur aspi)
     {
-        if (aspi.posX < 5)
+        //Vérifie si le robot n'est pas sur la dernière colonne
+        if (aspi.posX < 4)
         {
             aspi.posX += 1;
             aspi.compteur_elec -= 1;
         }
     }
+
+    //Fonction aller en haut
     public void Up(Aspirateur aspi)
     {
+        //Vérifie si le robot n'est pas sur la première ligne
         if (aspi.posY > 0)
         {
             aspi.posY -= 1;
             aspi.compteur_elec -= 1;
         }
     }
+
+    //Fonction aller en bas
     public void Down(Aspirateur aspi)
     {
-        if (aspi.posY < 5)
+        //Vérifie si le robot n'est pas sur la dernière ligne
+        if (aspi.posY < 4)
         {
             aspi.posY += 1;
             aspi.compteur_elec -= 1;
         }
     }
+
+    //Fonction ramasser
     public void Rammasser(Aspirateur aspi, Case param_case)
     {
         param_case.bijoux = false;
@@ -439,6 +486,8 @@ class Graph
             return this.solution;
         }
     }
+
+    //
     public double g(Node node)
     {
         int nbparents = 0;
@@ -449,6 +498,8 @@ class Graph
         }
         return nbparents;
     }
+
+    //
     public double heuristique(Node node) //manhattan distance entre tout les points ordonées par la distance ou seulement le prochain point ?
     {
         // retourne la distance entre start et le desir le plus proche
@@ -462,10 +513,14 @@ class Graph
         distancesDesirs = distancesDesirs.OrderBy(x => x.Value).ToDictionary(x => x.Key, x => x.Value);
         return distancesDesirs.ElementAt(0).Value;
     }
+
+    //Fonction qui retourne la distance de Manhattan entre le début et le noeud de fin
     public double ManhattanDist(Case start, Node end)
     {
         return Math.Abs(start.x - end.valeur[0]) + Math.Abs(start.y - end.valeur[1]);
     }
+
+    //
     public List<Node> RemonterArbre()
     {
         Node solu = this.solution;
@@ -475,10 +530,12 @@ class Graph
             solu = solu.parent;
             brancheSolution.Add(solu);
         }
-        Console.WriteLine("Chemin trouve");
+        Console.WriteLine("Chemin trouvé");
         AfficherEtage(brancheSolution);
         return brancheSolution;
     }
+
+    //
     public void AfficherEtage(List<Node> etage)
     {
         string str = "";
@@ -489,9 +546,10 @@ class Graph
         Console.WriteLine(str);
         Console.WriteLine();
     }
+
+    // Fonction qui vérifie si - pour un des nodes de l'etage - toutes les cases ont été visité
     public Node checkSolution(List<Node> etage) 
     {
-        // Vérifie si - pour un des nodes de l'etage - toutes les cases ont été visité
         for (int i =0; i<etage.Count; i++)
         {
             if(etage[i].desirs.Count == 0)
@@ -501,6 +559,7 @@ class Graph
         }
         return null;
     }
+
     /// <summary>
     ///  Cette fonction récursive génère l'arbre étage par étage jusqu'a trouver la solution
     ///  Je pense que ne créer que 3 noeuds permet de gagner du temps d'execution par rapport au détour que ca fait faire
@@ -522,7 +581,7 @@ class Graph
         }
         graph.AddRange(etageActuel);
 
-        //si la solution n'est pas trouvee on passe a l'etage suivant
+        //si la solution n'est pas trouvée on passe a l'étage suivant
         if(this.solution == null)
         {
             return BFS(etageActuel);
@@ -591,7 +650,7 @@ class Node
         this.valeur = new int[] {x,y};
         this.desirs = parent.desirs.ToList();
 
-        int index = desirCheck();  // si le noeud créer fait parti des désirs, on le retire de la liste
+        int index = desirCheck();  // si le noeud créer fait partie des désirs, on le retire de la liste
         if (index!=-1)
         {
             desirs.RemoveAt(index);
