@@ -1,4 +1,5 @@
-﻿using System.Threading.Tasks;
+﻿//Importations
+using System.Threading.Tasks;
 using System.Threading;
 using System;
 using System;
@@ -13,6 +14,7 @@ public class Program
     {
         //Initialisation d'un environnement vide
         Environnement env = new Environnement(5, 5);
+        env.GenererObstacles();
 
         //Création d'un robot aspirateur
         Aspirateur aspi = new Aspirateur(0, 0, false);
@@ -36,7 +38,7 @@ public class Program
             //Just do it
             
         }
-        //L'environnement ne s'exécute plus donc sur un thread spécifique là ?
+        
      /*
         // Lance les 2 fils d'execution
         Task task1 = Task.Factory.StartNew(() => env.runEnv(aspi));
@@ -182,7 +184,7 @@ class Environnement
         //return Performance;
     }
 
-    //Thread de l'environnement (pas utilisé ?)
+    //Thread de l'environnement
     public void runEnv(Aspirateur asp)
     {
         while (true)
@@ -216,7 +218,7 @@ class Aspirateur
         this.exploration_informe = exploration_informe; //Type d'exploration
     }
 
-    //Pas utilisé aussi ?
+    //Thread de l'aspirateur
     public void runAspi(Environnement env)
     {
         while (true)
@@ -441,10 +443,12 @@ class Graph
         graph.AddRange(A.enfants.ToList());
         if(this.solution == null)
         {
+            //Si l'aspirateur explore en BFS
             if(exploration_informe == false)
             {
                 this.solution = BFS(A.enfants.ToList());
             }
+            //Si l'aaspirateur explore en A*
             else
             {
                 Dictionary<Node, double> temp = new Dictionary<Node, double> ();
@@ -633,6 +637,7 @@ class Graph
 
 }
 
+// Classe Node
 // Comporte un compteur du nombre de cases qu'il reste à visiter, variable verifiee à la construction
 // Comporte le noeud parent et une liste des noeuds enfants
 class Node
@@ -642,6 +647,23 @@ class Node
     public int[] valeur;
     public List<Case> desirs;
 
+    //Constructeur pour le premier Node, qui n'a pas de parent
+    public Node(int x, int y, List<Case> desirs) 
+    {
+        this.enfants = new List<Node>();
+        this.parent = null;
+        
+        this.valeur = new int[] {x,y};
+        this.desirs = desirs;
+
+        int index = desirCheck();
+        if (index!=-1)
+        {
+            desirs.RemoveAt(index);
+        }
+    }
+
+    //Construcuteur pour le Node qui a un parent
     public Node(int x, int y, Node parent)
     {
         this.enfants = new List<Node>();
@@ -651,21 +673,6 @@ class Node
         this.desirs = parent.desirs.ToList();
 
         int index = desirCheck();  // si le noeud créer fait partie des désirs, on le retire de la liste
-        if (index!=-1)
-        {
-            desirs.RemoveAt(index);
-        }
-    }
-
-    public Node(int x, int y, List<Case> desirs) //constructeur pour le premier Node, qui n'a pas de parent
-    {
-        this.enfants = new List<Node>();
-        this.parent = null;
-        
-        this.valeur = new int[] {x,y};
-        this.desirs = desirs;
-
-        int index = desirCheck();
         if (index!=-1)
         {
             desirs.RemoveAt(index);
