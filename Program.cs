@@ -1,5 +1,4 @@
-﻿//Importations
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using System.Threading;
 using System;
 using System;
@@ -9,48 +8,37 @@ using System.Threading;
 
 public class Program
 {
-    //Programme principal
     static void Main()
     {
-        //Initialisation d'un environnement vide
-        Environnement env = new Environnement(5, 5);
+        Console.WriteLine("Creation Environnement vide");
+        Environnement env = new Environnement();
         env.GenererObstacles();
+        Aspirateur aspi = new Aspirateur(4,2, false);
 
-        //Création d'un robot aspirateur
-        Aspirateur aspi = new Aspirateur(0, 0, false);
-        
-        //Pendant que le robot fonctionne
-        while (true)
+        /*while (true)
         {
-            //Génération de premières poussières et bijoux dans l'environnement
-            env.GenererObstacles();
-            //Affichage de l'environnement 
             env.AfficherEnv(aspi);
-            //Affichage de la position du robot
+            env.GenererObstacles(); 
             Console.WriteLine(aspi.posX.ToString()+","+aspi.posY.ToString());
             Console.ReadKey();
-            //Création d'une copie de l'environnement pour le robot
             aspi.capteur.ObserveEnv(env);
-            //
             bool manoirChanged = aspi.UpdateMyState();
-            //
             aspi.ChooseAnAction(manoirChanged);
-            //Just do it
-            
-        }
+            env.AfficherEnv(aspi);
+
+        }*/
         
-     /*
         // Lance les 2 fils d'execution
         Task task1 = Task.Factory.StartNew(() => env.runEnv(aspi));
         Task task2 = Task.Factory.StartNew(() => aspi.runAspi(env));
 
         // Attend 20 secondes avant de terminer l'experience
-        Thread.Sleep(20 * 1000);*/
+        Thread.Sleep(0 * 1000);
         Console.ReadKey();
     }
 }
 
-//Classe Case
+
 class Case
 {
     //Proprités de la pièce ici appelée "case"
@@ -72,30 +60,19 @@ class Case
     }
 }
 
-//Classe environnement
+
 class Environnement
 {
     //L'environement est composé de 25 cases avec des propriétés      
     public Case[,] manoir = new Case[5, 5];
-    //Possède un nombre limmite de bijoux dedans
-    public int NbBijoux;
-    //Possède un nombre limite de poussières dedans
-    public int NbPoussieres;
-    //Score de performance du robot
-    public double Performance; 
+    public double Performance; //Score de performance du robot
     //public Aspirateur asp;
     //public Aspirateur Asp { get { return this.asp;} set { this.asp = value;} }
 
-    //Constructeur
-    public Environnement(int bijoux_param, int poussieres_param)
+    public Environnement()
     {
-        NbBijoux = bijoux_param;
-        NbPoussieres = poussieres_param;
-        //Création d'un manoir vide
         CreerEnvVide();
     }
-
-    //Fonction qui permet d'initialiser le manoir
     public void CreerEnvVide()
     {
         for (int i = 0; i < 5; i++)
@@ -106,68 +83,67 @@ class Environnement
             }
         }
     }
-
-    //Fonction qui génère les poussières et les bijoux
     public void GenererObstacles()
     {
         for (int i = 0; i < 5; i++)
         {
             for (int j = 0; j < 5; j++)
             {
-                Random random = new Random();//Nombre random
+                Random random = new Random();
 
-                //Chance de 2% d'avoir de la poussière
-                if ((random.Next(100) < 2) && (NbPoussieres < 25))
+                if ((random.Next(100) < 2))
                 {
                     if(manoir[i, j].poussieres == false) 
                     { 
                         manoir[i, j].poussieres = true;
-                        NbPoussieres += 1;//Une poussière de plus dans le manoir à aspirer
                     }
                 }
-                //Chance de 2% d'avoir un bijoux
-                if ((random.Next(100) < 2) && (NbBijoux < 25))
+                if ((random.Next(100) < 2) )
                 {
                     if (manoir[i,j].bijoux == false)
                     {
                         manoir[i, j].bijoux = true;
-                        NbBijoux += 1;//Un bijoux de plus à ramasser
                     }   
                 }
             }
         }
     }
 
-    //Fonction qui affiche l'environnement en temps réel
     public void AfficherEnv(Aspirateur asp)
     {
-        //Console.WriteLine("Affichage du terrain");
+        Console.WriteLine("Affichage du terrain");
         for (int i = 0; i < 5; i++)
         {
             for (int j = 0; j < 5; j++)
             {   
+                
+                if(asp.plan != null && asp.plan.Any(x => x.valeur[0] == j && x.valeur[1] == i) == true)
+                {
+                    Console.BackgroundColor = ConsoleColor.Magenta;
+                }
                 if(asp.posX == j && asp.posY == i) // Si c'est la case de l'aspirateur
                 {
                     Console.BackgroundColor = ConsoleColor.Red;
                 }
                 switch ((manoir[j, i].bijoux, manoir[j, i].poussieres))
                 {
-                    case (true, false): //Si la case possède un bijoux et pas de poussières
+                    case (true, false):
                         Console.ForegroundColor = ConsoleColor.Blue;
                         Console.Write(" B ");
                         break;
-                    case (true, true): //Si la case possède un bijoux et une poussière
+                    case (true, true):
                          Console.ForegroundColor = ConsoleColor.Green;
                          Console.Write(" X ");
                          break;
-                    case (false, true): //Si la case possède de la poussière
+                    case (false, true):
                         Console.ForegroundColor = ConsoleColor.Yellow;
                         Console.Write(" P ");
                         break;
-                    case (false, false): //Si la case ne contient rien
+                    case (false, false):
                         Console.Write(" O ");
                         break;
                 }
+
                 Console.BackgroundColor = ConsoleColor.Black; 
                 Console.ForegroundColor = ConsoleColor.White;
                 
@@ -176,7 +152,6 @@ class Environnement
         }
     }
 
-    //Mesure de la performance pour l'apprentissage
     public void MesurePerformance()
     { 
         //Performance = Performance + nbCasesPropres - (CompteurElec / nbCasesPropres) - 1.5 * nbBijouxAspires;
@@ -184,7 +159,6 @@ class Environnement
         //return Performance;
     }
 
-    //Thread de l'environnement
     public void runEnv(Aspirateur asp)
     {
         while (true)
@@ -196,29 +170,26 @@ class Environnement
     }
 }
 
-//Classe aspirateur
 class Aspirateur
 {
-    public int posX; //Position en ligne
-    public int posY; //Position en colonne
-    public int compteur_elec;//Cout à chasue action
-    public bool exploration_informe;//True pour ida* et false pour bfs
-    //public bool isRunning;
+    public int posX;
+    public int posY;
+    public int compteur_elec;  //Cout
+    public bool exploration_informe; //True pour ida* et false pour bfs
+    public static bool isRunning;
     List<Case> desirs = new List<Case>();
     public List<Case> Desirs { get { return desirs; } }
-    public Capteur capteur = new Capteur();//Création d'un capteur pour observer l'environnement
-    List<Node> plan;//Plan d'actions de l'aspirateir
-    public Effecteur effector = new Effecteur();//Création d'un effecteur pour agir
+    public Capteur capteur = new Capteur();
+    public List<Node> plan;
+    public Effecteur effector = new Effecteur();
 
-    //Constructeur
     public Aspirateur(int param_posX, int paramPosY, bool exploration_informe)
     {
-        posX = param_posX;//Position X
-        posY = paramPosY;//Position Y
-        this.exploration_informe = exploration_informe; //Type d'exploration
+        posX = param_posX;
+        posY = paramPosY;
+        this.exploration_informe = exploration_informe;
     }
 
-    //Thread de l'aspirateur
     public void runAspi(Environnement env)
     {
         while (true)
@@ -231,10 +202,9 @@ class Aspirateur
         }
     }
 
-    // Mets à jour les desirs (intentions)
-    public bool UpdateMyState() 
+    public bool UpdateMyState() // Mets à jour les desires
     {
-        bool manoirChanged = true;//
+        bool manoirChanged = true;
         List<Case> desirsTemp = desirs.ToList();
         desirs = new List<Case>();
         foreach(Case i in capteur.beliefs)
@@ -247,11 +217,9 @@ class Aspirateur
         if(desirsTemp == desirs) { manoirChanged = false;}
         return manoirChanged;
     }
-
-    //Choix de l'action à effectuer
     public void ChooseAnAction(bool manoirChanged)
     {
-        // Verifie si le robot se trouve sur un desir
+        // Verifie si le robot se trouve sur un desire
         int index  = - 1;
         for (int i = 0; i < desirs.Count; i++)
         {
@@ -274,7 +242,6 @@ class Aspirateur
         }
         else // Exploration
         {
-            // BFS
             if(manoirChanged == true)
             {   
                 Graph tree = new Graph(exploration_informe, posX, posY, desirs);  // génère le graph en BFS et trouve la solution
@@ -309,23 +276,18 @@ class Aspirateur
     }
 }
 
-//Classe capteur
+
 class Capteur
 {
-    //création d'une vision vide du manoir
     public Case[,] beliefs = new Case[5, 5];
     public double performance;
-
-    //Constrcteur
     public Capteur() { }
 
-    //Constructeur
     public Capteur(Environnement env)
     {
         ObserveEnv(env);
     }
 
-    //Fonction qui crée une copie du manoir à un instant t
     public void ObserveEnv(Environnement env)
     {
         for (int i = 0; i < 5; i++)
@@ -339,57 +301,45 @@ class Capteur
     }
 }
 
-//Classe Effecteur : permet au robot aspirateur d'effectuer des actions
+
 class Effecteur
 {
-    //Constructeur vide
-    public Effecteur(){ }
-
-    //Fonction aller à gauche
+    public Effecteur()
+    {
+        
+    }
     public void Left(Aspirateur aspi)
     {
-        //Vérifie si le robot n'est pas sur la première colonne
         if (aspi.posX > 0)
         {
             aspi.posX -= 1;
             aspi.compteur_elec -= 1;
         }
     }
-
-    //Fonction aller à droite
     public void Right(Aspirateur aspi)
     {
-        //Vérifie si le robot n'est pas sur la dernière colonne
-        if (aspi.posX < 4)
+        if (aspi.posX < 5)
         {
             aspi.posX += 1;
             aspi.compteur_elec -= 1;
         }
     }
-
-    //Fonction aller en haut
     public void Up(Aspirateur aspi)
     {
-        //Vérifie si le robot n'est pas sur la première ligne
         if (aspi.posY > 0)
         {
             aspi.posY -= 1;
             aspi.compteur_elec -= 1;
         }
     }
-
-    //Fonction aller en bas
     public void Down(Aspirateur aspi)
     {
-        //Vérifie si le robot n'est pas sur la dernière ligne
-        if (aspi.posY < 4)
+        if (aspi.posY < 5)
         {
             aspi.posY += 1;
             aspi.compteur_elec -= 1;
         }
     }
-
-    //Fonction ramasser
     public void Rammasser(Aspirateur aspi, Case param_case)
     {
         param_case.bijoux = false;
@@ -422,109 +372,206 @@ class Graph
     public List<Node> graph; //liste de nodes reliés par leur attributs parent et enfants
     public List<Case> desirs;  // liste des cases à visiter
     public Node solution;   // Noeud solution trouvé, il suffit ensuite de remonter le chemin grace aux attributs 
+   
 
     public Graph(bool exploration_informe, int posX, int posY, List<Case> desirsparam)
     {
-        this.graph = new List<Node>();
         this.solution = null;
         this.desirs = desirsparam;
 
         // On creer les 2 premiers etages car la fonction CreateNodes regarde la variable parent.parent
         Node A = new Node(posX, posY, desirs);  
-        /*
-        if (posX > 0) { A.enfants.Add(new Node(posX-1, posY, A)); }
-        if (posX < 4) { A.enfants.Add(new Node(posX+1, posY, A)); }
-        if (posY > 0) { A.enfants.Add(new Node(posX, posY-1, A)); }
-        if (posY < 4) { A.enfants.Add(new Node(posX, posY+1, A)); }    */
-        
-        // Verification que la solution n'est pas trouvee
-        this.solution = checkSolution(A.enfants.ToList());
-        graph.Add(A);
-        graph.AddRange(A.enfants.ToList());
-        if(this.solution == null)
+        if(exploration_informe == false)
         {
-            //Si l'aspirateur explore en BFS
-            if(exploration_informe == false)
+            if (posX > 0) { A.enfants.Add(new Node(posX-1, posY, A)); }
+            if (posX < 4) { A.enfants.Add(new Node(posX+1, posY, A)); }
+            if (posY > 0) { A.enfants.Add(new Node(posX, posY-1, A)); }
+            if (posY < 4) { A.enfants.Add(new Node(posX, posY+1, A)); }
+            this.solution = checkSolution(A.enfants.ToList());
+            if(this.solution == null)
             {
                 this.solution = BFS(A.enfants.ToList());
             }
-            //Si l'aaspirateur explore en A*
-            else
-            {
-                Dictionary<Node, double> temp = new Dictionary<Node, double> ();
-                temp.Add(A, 10000);
-                this.solution = IDA(A, temp);
-            }
+        }
+        else
+        {             
+            Dictionary<Node, double> temp = new Dictionary<Node, double> ();
+            temp.Add(A, 10000);
+            this.solution = Aetoile(A,temp);
         }
     }
 
-
-    public Node IDA(Node actualNode, Dictionary<Node, double> savedNodes)
+    
+    public Node Aetoile(Node actualNode, Dictionary<Node, double> savedNodes)
     {
-        // create nodes
-        // check if child solution
-        // calculate heur f pour chaque child
-        // add child to savednodes
-        // remove actualnode from savednodes
-        // tri local des childs par f
-        // if(mininmum f des child >= min savednodes) : 
-        //              Go to min f des savednodes ordonné par le plus ancien
-        // else:
-        //              foreach f :
-        //                  explore node
+        
         List<Node> child = CreateChildNodes(actualNode);
         this.solution = checkSolution(child);
-        for(int i=0; i<child.Count; i++)
-        {
-            double f = g(child[i]) + heuristique(child[i]);
-            savedNodes.Add(child[i], f);
+        Dictionary<Node, double> temp = new Dictionary<Node, double> ();
+        if(this.solution == null)
+        {   
+            for(int i=0; i<child.Count; i++)
+            {
+                double f = g(child[i]) + heuristiqueProfonde(child[i], actualNode.desirs);
+                savedNodes.Add(child[i], f);
+                temp.Add(child[i], f);
+            }
+            savedNodes.Remove(actualNode);
+            /*
+            Console.WriteLine(actualNode.valeur[0].ToString() + ";" + actualNode.valeur[1].ToString());
+            //Console.WriteLine("contains"+savedNodes.Count.ToString());
+            
+            foreach(Node a in savedNodes.Keys){
+                Node b = a;
+                while(b.parent != null)
+                {
+                    Console.Write(b.valeur[0].ToString() + ";" + b.valeur[1].ToString() + " ");
+                    b = b.parent;
+                }
+
+                Console.Write(savedNodes[a]);
+                Console.WriteLine("---------");
+            }
+            Console.WriteLine("*******");*/
+            savedNodes = savedNodes.OrderBy(x => x.Value).ToDictionary(x => x.Key, x => x.Value);
+            temp = temp.OrderBy(x => x.Value).ToDictionary(x =>x.Key, temp => temp.Value);  
         }
-        savedNodes.Remove(actualNode);
-        savedNodes = savedNodes.OrderBy(x => x.Value).ToDictionary(x => x.Key, x => x.Value);
         if(this.solution == null)
         {
-            return IDA(savedNodes.ElementAt(0).Key, savedNodes);
+            // on expanse le noeud ayant le plus bas score et en priorisant les enfants du noeud actuel
+            if(savedNodes.Count > 1000)
+            {
+                savedNodes = savedNodes.OrderBy(x => x.Value).ToDictionary(x => x.Key, x => x.Value);
+
+                savedNodes = savedNodes.Take(5).ToDictionary(x=>x.Key, x=> x.Value);
+            }
+            Node next;
+            if (temp.ElementAt(0).Value == savedNodes.ElementAt(0).Value)
+            {
+                next = temp.ElementAt(0).Key;
+            }
+            else
+            {
+                next = savedNodes.ElementAt(0).Key;
+            }
+            return Aetoile(next, savedNodes);
+
         }
         else
         {
             return this.solution;
         }
     }
-
-    //
     public double g(Node node)
     {
+        //// C'est la distance parcourue jusqu'a maintenant / le nombre de desirs accomplis (nbre de désirs total - nbre de desirs du node)
+        //Calcul de la distance, c'est le nombre de cases parcourues (du coup le nombre de parents)
         int nbparents = 0;
-        while(node.parent != null)
+        Node temp = node;
+        while(temp.parent != null)
         {
             nbparents += 1;
-            node = node.parent;
+            temp = temp.parent;
+            
         }
-        return nbparents;
-    }
-
-    //
-    public double heuristique(Node node) //manhattan distance entre tout les points ordonées par la distance ou seulement le prochain point ?
-    {
-        // retourne la distance entre start et le desir le plus proche
-        List<Case> localdesirs = desirs.ToList();
-        Dictionary<Case, double> distancesDesirs = new Dictionary<Case, double>();
-        for(int i=0; i<localdesirs.Count; i++)
+        int nbDesirsDone = 0;
+        if(this.desirs.Count != node.desirs.Count && this.desirs.Count!=0)
         {
-            double dist = ManhattanDist(localdesirs[i], node);
-            distancesDesirs.Add(localdesirs[i], dist);
+            nbDesirsDone = (this.desirs.Count - node.desirs.Count);
         }
-        distancesDesirs = distancesDesirs.OrderBy(x => x.Value).ToDictionary(x => x.Key, x => x.Value);
-        return distancesDesirs.ElementAt(0).Value;
+        return nbparents / (nbDesirsDone + 1.0);
     }
-
-    //Fonction qui retourne la distance de Manhattan entre le début et le noeud de fin
-    public double ManhattanDist(Case start, Node end)
+    public double heuristique(Node node, List<Case> desirActualNode) 
     {
-        return Math.Abs(start.x - end.valeur[0]) + Math.Abs(start.y - end.valeur[1]);
+        // retourne la distance entre start et le desir du node le plus proche !! chaque node a une liste de desirs !!
+        // comme le desirs est retiré a la creation du node il ne peux pas mettre son h à 0
+        if(node.desirCheck(desirActualNode) != -1)
+        {
+            return 0;
+        }
+        else
+        {
+            List<Case> localdesirs = node.desirs.ToList();
+            Dictionary<Case, double> distancesDesirs = new Dictionary<Case, double>();
+            for(int i=0; i<localdesirs.Count; i++)
+            {
+                double dist = ManhattanDist(localdesirs[i], node.valeur[0], node.valeur[1]);
+                distancesDesirs.Add(localdesirs[i], dist );
+            }
+            distancesDesirs = distancesDesirs.OrderBy(x => x.Value).ToDictionary(x => x.Key, x => x.Value);
+            return distancesDesirs.ElementAt(0).Value;
+        }
+        
     }
+    public double heuristiqueProfonde(Node node, List<Case> desirActualNode)
+    { 
 
-    //
+        //retrourne la distance le node et le 
+        // calcule la dist avec tt les desirs et sort le plus proche
+        double distancemin;
+        double distaceminbis = 0;
+        double distaceminbisbis = 0;
+        Case selecteddesir;
+
+        List<Case> localdesirs = node.desirs.ToList();
+        Dictionary<Case, double> distancesDesirs = new Dictionary<Case, double>();
+        if(node.desirCheck(desirActualNode) != -1)
+        {
+            distancemin = 0;
+            selecteddesir = desirActualNode.ElementAt(node.desirCheck(desirActualNode));
+
+        }
+        else
+        {
+            for(int i=0; i<localdesirs.Count; i++)
+            {
+                double dist = ManhattanDist(localdesirs[i], node.valeur[0], node.valeur[1]);
+                distancesDesirs.Add(localdesirs[i], dist );
+            }
+            distancesDesirs = distancesDesirs.OrderBy(x => x.Value).ToDictionary(x => x.Key, x => x.Value);
+            distancemin = distancesDesirs.ElementAt(0).Value;
+            selecteddesir = distancesDesirs.ElementAt(0).Key;
+
+        }        
+
+        // trouve le desirs le plus proche du desirs selectionné
+        localdesirs.Remove(selecteddesir);
+        if(localdesirs.Count != 0)
+        {
+            distancesDesirs = new Dictionary<Case, double>();
+            for(int i=0; i<localdesirs.Count; i++)
+            {
+                double dist = ManhattanDist(localdesirs[i], selecteddesir.x, selecteddesir.y);
+                distancesDesirs.Add(localdesirs[i], dist );
+            }
+            distancesDesirs = distancesDesirs.OrderBy(x => x.Value).ToDictionary(x => x.Key, x => x.Value);
+            distaceminbis = distancesDesirs.ElementAt(0).Value;
+            selecteddesir = distancesDesirs.ElementAt(0).Key;
+
+        }
+        
+        localdesirs.Remove(distancesDesirs.ElementAt(0).Key);
+        if(localdesirs.Count != 0)
+        {
+            distancesDesirs = new Dictionary<Case, double>();
+            for(int i=0; i<localdesirs.Count; i++)
+            {
+                double dist = ManhattanDist(localdesirs[i], selecteddesir.x, selecteddesir.y);
+                distancesDesirs.Add(localdesirs[i], dist );
+            }
+            distancesDesirs = distancesDesirs.OrderBy(x => x.Value).ToDictionary(x => x.Key, x => x.Value);
+            distaceminbisbis = distancesDesirs.ElementAt(0).Value;
+        }
+        
+
+        return distaceminbis + distancemin+distaceminbisbis;
+    }
+    public double ManhattanDist(Case start, int x, int y)
+    {
+        return Math.Abs(start.x - x) + Math.Abs(start.y - y);
+    }    
+
+    
     public List<Node> RemonterArbre()
     {
         Node solu = this.solution;
@@ -534,12 +581,10 @@ class Graph
             solu = solu.parent;
             brancheSolution.Add(solu);
         }
-        Console.WriteLine("Chemin trouvé");
+        Console.WriteLine("Chemin trouve");
         AfficherEtage(brancheSolution);
         return brancheSolution;
     }
-
-    //
     public void AfficherEtage(List<Node> etage)
     {
         string str = "";
@@ -550,10 +595,9 @@ class Graph
         Console.WriteLine(str);
         Console.WriteLine();
     }
-
-    // Fonction qui vérifie si - pour un des nodes de l'etage - toutes les cases ont été visité
     public Node checkSolution(List<Node> etage) 
     {
+        // Vérifie si - pour un des nodes de l'etage - toutes les cases ont été visité
         for (int i =0; i<etage.Count; i++)
         {
             if(etage[i].desirs.Count == 0)
@@ -563,7 +607,6 @@ class Graph
         }
         return null;
     }
-
     /// <summary>
     ///  Cette fonction récursive génère l'arbre étage par étage jusqu'a trouver la solution
     ///  Je pense que ne créer que 3 noeuds permet de gagner du temps d'execution par rapport au détour que ca fait faire
@@ -583,9 +626,7 @@ class Graph
                 this.solution = checkSolution(children);
             }            
         }
-        graph.AddRange(etageActuel);
-
-        //si la solution n'est pas trouvée on passe a l'étage suivant
+        //si la solution n'est pas trouvee on passe a l'etage suivant
         if(this.solution == null)
         {
             return BFS(etageActuel);
@@ -637,7 +678,6 @@ class Graph
 
 }
 
-// Classe Node
 // Comporte un compteur du nombre de cases qu'il reste à visiter, variable verifiee à la construction
 // Comporte le noeud parent et une liste des noeuds enfants
 class Node
@@ -647,23 +687,7 @@ class Node
     public int[] valeur;
     public List<Case> desirs;
 
-    //Constructeur pour le premier Node, qui n'a pas de parent
-    public Node(int x, int y, List<Case> desirs) 
-    {
-        this.enfants = new List<Node>();
-        this.parent = null;
-        
-        this.valeur = new int[] {x,y};
-        this.desirs = desirs;
 
-        int index = desirCheck();
-        if (index!=-1)
-        {
-            desirs.RemoveAt(index);
-        }
-    }
-
-    //Construcuteur pour le Node qui a un parent
     public Node(int x, int y, Node parent)
     {
         this.enfants = new List<Node>();
@@ -672,19 +696,34 @@ class Node
         this.valeur = new int[] {x,y};
         this.desirs = parent.desirs.ToList();
 
-        int index = desirCheck();  // si le noeud créer fait partie des désirs, on le retire de la liste
+        int index = desirCheck(parent.desirs.ToList());  // si le noeud créer fait parti des désirs, on le retire de la liste
         if (index!=-1)
         {
             desirs.RemoveAt(index);
         }
     }
 
-    public int desirCheck() //permet de trouver le desir concerné
+    public Node(int x, int y, List<Case> desirs) //constructeur pour le premier Node, qui n'a pas de parent
+    {
+        this.enfants = new List<Node>();
+        this.parent = null;
+        
+        this.valeur = new int[] {x,y};
+        this.desirs = desirs;
+
+        int index = desirCheck(desirs);
+        if (index!=-1)
+        {
+            desirs.RemoveAt(index);
+        }
+    }
+
+    public int desirCheck(List<Case> desirsList) //permet de trouver le desir concerné s'il existe
     {
         int index  = - 1;
-        for (int i = 0; i < desirs.Count; i++)
+        for (int i = 0; i < desirsList.Count; i++)
         {
-            if (desirs[i].x == valeur[0] && desirs[i].y == valeur[1])
+            if (desirsList[i].x == valeur[0] && desirsList[i].y == valeur[1])
             {
                 index = i; break;
             }
