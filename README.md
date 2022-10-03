@@ -10,7 +10,7 @@
 L'agent est un agent basé sur les buts
 Capteurs : performance, objets
 ### État mental BDI
-Belief : liste des cases où poussières || bijoux == true avec la distance
+Beliefs : liste des cases où poussières || bijoux == true avec la distance
 Desires : liste des cases où aller ordonnées selon la distance
 Intentions : Pile d'actions (aspirer, ramasser, droite, ...)
 ### Fonction d'agent

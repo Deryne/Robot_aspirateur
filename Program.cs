@@ -13,20 +13,7 @@ public class Program
         Console.WriteLine("Creation Environnement vide");
         Environnement env = new Environnement();
         env.GenererObstacles();
-        Aspirateur aspi = new Aspirateur(4,2, false);
-
-        /*while (true)
-        {
-            env.AfficherEnv(aspi);
-            env.GenererObstacles(); 
-            Console.WriteLine(aspi.posX.ToString()+","+aspi.posY.ToString());
-            Console.ReadKey();
-            aspi.capteur.ObserveEnv(env);
-            bool manoirChanged = aspi.UpdateMyState();
-            aspi.ChooseAnAction(manoirChanged);
-            env.AfficherEnv(aspi);
-
-        }*/
+        Aspirateur aspi = new Aspirateur(4,2, true);
         
         // Lance les 2 fils d'execution
         Task task1 = Task.Factory.StartNew(() => env.runEnv(aspi));
@@ -38,7 +25,8 @@ public class Program
     }
 }
 
-
+//Classe Caase
+//Sert à contenir des bijoux et/ou de la poussière
 class Case
 {
     //Proprités de la pièce ici appelée "case"
@@ -49,7 +37,7 @@ class Case
     public int x; // Permet de calculer la distance, sera utile pour A*
     public int y;
 
-    //Définition des coorodnnées dans un constructeur
+    //Définition des coordonnées dans un constructeur
     public Case(int xparam, int yparam)
     {
         bijoux = false;
@@ -60,7 +48,8 @@ class Case
     }
 }
 
-
+//Classe Environnement
+//Sert à créer un environnement de cases pour l'aspirateur
 class Environnement
 {
     //L'environement est composé de 25 cases avec des propriétés      
@@ -69,10 +58,14 @@ class Environnement
     //public Aspirateur asp;
     //public Aspirateur Asp { get { return this.asp;} set { this.asp = value;} }
 
+    //Constructeur
     public Environnement()
     {
+        //On crée d'abord un manoir vide
         CreerEnvVide();
     }
+
+    //Fonction qui initialise le manoir
     public void CreerEnvVide()
     {
         for (int i = 0; i < 5; i++)
@@ -83,6 +76,8 @@ class Environnement
             }
         }
     }
+
+    //Fonction qui génère les bijoux et les poussières
     public void GenererObstacles()
     {
         for (int i = 0; i < 5; i++)
@@ -91,14 +86,14 @@ class Environnement
             {
                 Random random = new Random();
 
-                if ((random.Next(100) < 2))
+                if ((random.Next(100) < 2))//Probabilité en dessous de 2%
                 {
                     if(manoir[i, j].poussieres == false) 
                     { 
                         manoir[i, j].poussieres = true;
                     }
                 }
-                if ((random.Next(100) < 2) )
+                if ((random.Next(100) < 2))//Probabilité en dessous de 2%
                 {
                     if (manoir[i,j].bijoux == false)
                     {
@@ -107,8 +102,10 @@ class Environnement
                 }
             }
         }
+        
     }
 
+    //Fonction qui affiche l'environnement en temps réel
     public void AfficherEnv(Aspirateur asp)
     {
         Console.WriteLine("Affichage du terrain");
@@ -116,7 +113,6 @@ class Environnement
         {
             for (int j = 0; j < 5; j++)
             {   
-                
                 if(asp.plan != null && asp.plan.Any(x => x.valeur[0] == j && x.valeur[1] == i) == true)
                 {
                     Console.BackgroundColor = ConsoleColor.Magenta;
@@ -146,7 +142,6 @@ class Environnement
 
                 Console.BackgroundColor = ConsoleColor.Black; 
                 Console.ForegroundColor = ConsoleColor.White;
-                
             }
             Console.WriteLine();
         }
@@ -159,30 +154,36 @@ class Environnement
         //return Performance;
     }
 
+    //Thread de l'environnement
     public void runEnv(Aspirateur asp)
     {
         while (true)
         {
             this.GenererObstacles();
+            Thread.Sleep(3000);
             MesurePerformance();
             Thread.Sleep(2000);
         }
     }
 }
 
+//Classe Aspirateur
+//Sert à créer le robot aspirateur
 class Aspirateur
 {
-    public int posX;
-    public int posY;
-    public int compteur_elec;  //Cout
+    public int posX;//Position en X
+    public int posY;//Position en Y
+    public int compteur_elec = 0; //Cout d'electricite
+    public int perf = 0;
     public bool exploration_informe; //True pour ida* et false pour bfs
     public static bool isRunning;
-    List<Case> desirs = new List<Case>();
-    public List<Case> Desirs { get { return desirs; } }
-    public Capteur capteur = new Capteur();
-    public List<Node> plan;
-    public Effecteur effector = new Effecteur();
+    List<Case> intentions = new List<Case>();//Liste vide des intentions de l'aspirateur
+    public List<Case> Intentions { get { return intentions; } }
+    public Capteur capteur = new Capteur();//Création d'un capteur
+    public List<Node> plan;//Création d'un plan d'exécution
+    public Effecteur effector = new Effecteur();//Création d'un effecteur
 
+    //Constructeur
     public Aspirateur(int param_posX, int paramPosY, bool exploration_informe)
     {
         posX = param_posX;
@@ -190,6 +191,7 @@ class Aspirateur
         this.exploration_informe = exploration_informe;
     }
 
+    //Thread de l'aspirateur
     public void runAspi(Environnement env)
     {
         while (true)
@@ -202,35 +204,38 @@ class Aspirateur
         }
     }
 
-    public bool UpdateMyState() // Mets à jour les desires
+    // Mets à jour les intentions
+    public bool UpdateMyState() 
     {
         bool manoirChanged = true;
-        List<Case> desirsTemp = desirs.ToList();
-        desirs = new List<Case>();
+        List<Case> intentionsTemp = intentions.ToList();
+        intentions = new List<Case>();
         foreach(Case i in capteur.beliefs)
         {
             if(i.bijoux == true || i.poussieres == true)
             {
-                desirs.Add(i);
+                intentions.Add(i);
             }
         }     
-        if(desirsTemp == desirs) { manoirChanged = false;}
+        if(intentionsTemp == intentions) { manoirChanged = false;}
         return manoirChanged;
     }
+
+    //Choisis la première intention à réaliser
     public void ChooseAnAction(bool manoirChanged)
     {
-        // Verifie si le robot se trouve sur un desire
+        // Verifie si le robot se trouve sur une case avec une intention
         int index  = - 1;
-        for (int i = 0; i < desirs.Count; i++)
+        for (int i = 0; i < intentions.Count; i++)
         {
-            if (desirs[i].x == posX && desirs[i].y == posY)
+            if (intentions[i].x == posX && intentions[i].y == posY)
             {
                 index = i; break;
             }
         }
         if(index != -1)
         {
-            Case actualCase = desirs[index];
+            Case actualCase = intentions[index];
             if(actualCase.bijoux == true)
             {
                 effector.Rammasser(this,  actualCase);
@@ -244,13 +249,13 @@ class Aspirateur
         {
             if(manoirChanged == true)
             {   
-                Graph tree = new Graph(exploration_informe, posX, posY, desirs);  // génère le graph en BFS et trouve la solution
+                Graph tree = new Graph(exploration_informe, posX, posY, intentions);  // génère le graph en BFS et trouve la solution
                 plan = tree.RemonterArbre();  // remonte la solution pour trouver le prochain mouvement
             }
             Node nexMoove = plan[plan.Count-1];
             plan.Remove(nexMoove);
 
-            if(posX == nexMoove.valeur[0]) //ca veut dire que le mouvement est dans la dimension y
+            if(posX == nexMoove.valeur[0]) //ça veut dire que le mouvement est dans la dimension y
             {
                 if(posY + 1 == nexMoove.valeur[1]) 
                 {
@@ -276,18 +281,23 @@ class Aspirateur
     }
 }
 
-
+//Classe Capteur
+//Sert à créer une copie de l'environnement
 class Capteur
 {
-    public Case[,] beliefs = new Case[5, 5];
+    public Case[,] beliefs = new Case[5, 5];//Création d'une copie vide de l'environnement
     public double performance;
+
+    //Constrcteur vide
     public Capteur() { }
 
+    //Constructeur
     public Capteur(Environnement env)
     {
         ObserveEnv(env);
     }
 
+    //Remplissage de la copie
     public void ObserveEnv(Environnement env)
     {
         for (int i = 0; i < 5; i++)
@@ -301,13 +311,14 @@ class Capteur
     }
 }
 
-
+//Classe Effecteur
+//Sert à faire agir le robot
 class Effecteur
 {
-    public Effecteur()
-    {
-        
-    }
+    //Constructeur vide
+    public Effecteur(){}
+
+    //Aller à gauche
     public void Left(Aspirateur aspi)
     {
         if (aspi.posX > 0)
@@ -316,14 +327,18 @@ class Effecteur
             aspi.compteur_elec -= 1;
         }
     }
+
+    //Aller à droite
     public void Right(Aspirateur aspi)
     {
-        if (aspi.posX < 5)
+        if (aspi.posX < 4)
         {
             aspi.posX += 1;
             aspi.compteur_elec -= 1;
         }
     }
+
+    //Aller en haut
     public void Up(Aspirateur aspi)
     {
         if (aspi.posY > 0)
@@ -332,27 +347,35 @@ class Effecteur
             aspi.compteur_elec -= 1;
         }
     }
+
+    //Aller en bas
     public void Down(Aspirateur aspi)
     {
-        if (aspi.posY < 5)
+        if (aspi.posY < 4)
         {
             aspi.posY += 1;
             aspi.compteur_elec -= 1;
+            aspi.perf += 3;
         }
     }
+
+    //Ramasser un bijoux
     public void Rammasser(Aspirateur aspi, Case param_case)
     {
         param_case.bijoux = false;
         aspi.compteur_elec -= 1;
+        aspi.perf += 3;
         Console.WriteLine("-----------------------------------------Ramasser");
     }
+
+    //Aspirer une poussière
     public void Aspirer(Aspirateur aspi, Case param_case)
     {
         param_case.poussieres = false;
         if (param_case.bijoux)
         {
             param_case.bijoux = false;
-            //MALUS ici 
+            aspi.perf -= 9;
         }
         aspi.compteur_elec -= 1;
         Console.WriteLine("-----------------------------------------Aspirer");
@@ -360,27 +383,25 @@ class Effecteur
 
 }
 
-
 /// <summary>
 ///  Cette classe permet d'appliquer plusieur aglorithmes d'exploration à notre champs de recherche
-///  Au lieu de créer un graph puis de le parcourir on l'explore en même temps qu'on le créer
-///  Je n'ai pas pris en compte aspirer+ramasser, voir si c'est utile de les intégrer ou alors si ca complexifie pour rien
+///  Au lieu de créer un graph puis de le parcourir on l'explore en même temps qu'on le crée
 /// </summary>
 class Graph
 {
     //solution cherchée : manoir propre --> le robot passe sur toutes les cases 
     public List<Node> graph; //liste de nodes reliés par leur attributs parent et enfants
-    public List<Case> desirs;  // liste des cases à visiter
+    public List<Case> intentions;  // liste des cases à visiter
     public Node solution;   // Noeud solution trouvé, il suffit ensuite de remonter le chemin grace aux attributs 
    
-
-    public Graph(bool exploration_informe, int posX, int posY, List<Case> desirsparam)
+    //Constructeur
+    public Graph(bool exploration_informe, int posX, int posY, List<Case> intentionsparam)
     {
         this.solution = null;
-        this.desirs = desirsparam;
+        this.intentions = intentionsparam;
 
         // On creer les 2 premiers etages car la fonction CreateNodes regarde la variable parent.parent
-        Node A = new Node(posX, posY, desirs);  
+        Node A = new Node(posX, posY, intentions);  
         if(exploration_informe == false)
         {
             if (posX > 0) { A.enfants.Add(new Node(posX-1, posY, A)); }
@@ -401,7 +422,7 @@ class Graph
         }
     }
 
-    
+    //Fonction pour A*
     public Node Aetoile(Node actualNode, Dictionary<Node, double> savedNodes)
     {
         
@@ -412,7 +433,7 @@ class Graph
         {   
             for(int i=0; i<child.Count; i++)
             {
-                double f = g(child[i]) + heuristiqueProfonde(child[i], actualNode.desirs);
+                double f = g(child[i]) + heuristiqueProfonde(child[i], actualNode.intentions);
                 savedNodes.Add(child[i], f);
                 temp.Add(child[i], f);
             }
@@ -433,6 +454,7 @@ class Graph
                 Console.WriteLine("---------");
             }
             Console.WriteLine("*******");*/
+
             savedNodes = savedNodes.OrderBy(x => x.Value).ToDictionary(x => x.Key, x => x.Value);
             temp = temp.OrderBy(x => x.Value).ToDictionary(x =>x.Key, temp => temp.Value);  
         }
@@ -462,10 +484,12 @@ class Graph
             return this.solution;
         }
     }
+
+    //Fonction g
     public double g(Node node)
     {
-        //// C'est la distance parcourue jusqu'a maintenant / le nombre de desirs accomplis (nbre de désirs total - nbre de desirs du node)
-        //Calcul de la distance, c'est le nombre de cases parcourues (du coup le nombre de parents)
+        // C'est la distance parcourue jusqu'a maintenant / le nombre d'intentions accomplies (nbre de désirs total - nbre d'intentions du node)
+        // Calcul de la distance, c'est le nombre de cases parcourues (du coup le nombre de parents)
         int nbparents = 0;
         Node temp = node;
         while(temp.parent != null)
@@ -474,47 +498,50 @@ class Graph
             temp = temp.parent;
             
         }
-        int nbDesirsDone = 0;
-        if(this.desirs.Count != node.desirs.Count && this.desirs.Count!=0)
+        int nbIntentionsDone = 0;
+        if(this.intentions.Count != node.intentions.Count && this.intentions.Count!=0)
         {
-            nbDesirsDone = (this.desirs.Count - node.desirs.Count);
+            nbIntentionsDone = (this.intentions.Count - node.intentions.Count);
         }
-        return nbparents / (nbDesirsDone + 1.0);
+        return nbparents / (nbIntentionsDone + 1.0);
     }
+
+    //Fonction heuristique
     public double heuristique(Node node, List<Case> desirActualNode) 
     {
-        // retourne la distance entre start et le desir du node le plus proche !! chaque node a une liste de desirs !!
-        // comme le desirs est retiré a la creation du node il ne peux pas mettre son h à 0
+        // retourne la distance entre start et le desir du node le plus proche !! chaque node a une liste des intentions !!
+        // comme l'intention est retiré a la creation du node il ne peux pas mettre son h à 0
         if(node.desirCheck(desirActualNode) != -1)
         {
             return 0;
         }
         else
         {
-            List<Case> localdesirs = node.desirs.ToList();
-            Dictionary<Case, double> distancesDesirs = new Dictionary<Case, double>();
-            for(int i=0; i<localdesirs.Count; i++)
+            List<Case> localintentions = node.intentions.ToList();
+            Dictionary<Case, double> distancesIntentions = new Dictionary<Case, double>();
+            for(int i=0; i<localintentions.Count; i++)
             {
-                double dist = ManhattanDist(localdesirs[i], node.valeur[0], node.valeur[1]);
-                distancesDesirs.Add(localdesirs[i], dist );
+                double dist = ManhattanDist(localintentions[i], node.valeur[0], node.valeur[1]);
+                distancesIntentions.Add(localintentions[i], dist );
             }
-            distancesDesirs = distancesDesirs.OrderBy(x => x.Value).ToDictionary(x => x.Key, x => x.Value);
-            return distancesDesirs.ElementAt(0).Value;
+            distancesIntentions = distancesIntentions.OrderBy(x => x.Value).ToDictionary(x => x.Key, x => x.Value);
+            return distancesIntentions.ElementAt(0).Value;
         }
         
     }
+
+    //Fonction heuristique profonde
     public double heuristiqueProfonde(Node node, List<Case> desirActualNode)
     { 
-
         //retrourne la distance le node et le 
-        // calcule la dist avec tt les desirs et sort le plus proche
+        // calcule la dist avec tt les intentions et sort le plus proche
         double distancemin;
         double distaceminbis = 0;
         double distaceminbisbis = 0;
         Case selecteddesir;
 
-        List<Case> localdesirs = node.desirs.ToList();
-        Dictionary<Case, double> distancesDesirs = new Dictionary<Case, double>();
+        List<Case> localintentions = node.intentions.ToList();
+        Dictionary<Case, double> distancesIntentions = new Dictionary<Case, double>();
         if(node.desirCheck(desirActualNode) != -1)
         {
             distancemin = 0;
@@ -523,44 +550,44 @@ class Graph
         }
         else
         {
-            for(int i=0; i<localdesirs.Count; i++)
+            for(int i=0; i<localintentions.Count; i++)
             {
-                double dist = ManhattanDist(localdesirs[i], node.valeur[0], node.valeur[1]);
-                distancesDesirs.Add(localdesirs[i], dist );
+                double dist = ManhattanDist(localintentions[i], node.valeur[0], node.valeur[1]);
+                distancesIntentions.Add(localintentions[i], dist );
             }
-            distancesDesirs = distancesDesirs.OrderBy(x => x.Value).ToDictionary(x => x.Key, x => x.Value);
-            distancemin = distancesDesirs.ElementAt(0).Value;
-            selecteddesir = distancesDesirs.ElementAt(0).Key;
+            distancesIntentions = distancesIntentions.OrderBy(x => x.Value).ToDictionary(x => x.Key, x => x.Value);
+            distancemin = distancesIntentions.ElementAt(0).Value;
+            selecteddesir = distancesIntentions.ElementAt(0).Key;
 
         }        
 
-        // trouve le desirs le plus proche du desirs selectionné
-        localdesirs.Remove(selecteddesir);
-        if(localdesirs.Count != 0)
+        // trouve l'intention la plus proche de l'intention selectionnée
+        localintentions.Remove(selecteddesir);
+        if(localintentions.Count != 0)
         {
-            distancesDesirs = new Dictionary<Case, double>();
-            for(int i=0; i<localdesirs.Count; i++)
+            distancesIntentions = new Dictionary<Case, double>();
+            for(int i=0; i<localintentions.Count; i++)
             {
-                double dist = ManhattanDist(localdesirs[i], selecteddesir.x, selecteddesir.y);
-                distancesDesirs.Add(localdesirs[i], dist );
+                double dist = ManhattanDist(localintentions[i], selecteddesir.x, selecteddesir.y);
+                distancesIntentions.Add(localintentions[i], dist );
             }
-            distancesDesirs = distancesDesirs.OrderBy(x => x.Value).ToDictionary(x => x.Key, x => x.Value);
-            distaceminbis = distancesDesirs.ElementAt(0).Value;
-            selecteddesir = distancesDesirs.ElementAt(0).Key;
+            distancesIntentions = distancesIntentions.OrderBy(x => x.Value).ToDictionary(x => x.Key, x => x.Value);
+            distaceminbis = distancesIntentions.ElementAt(0).Value;
+            selecteddesir = distancesIntentions.ElementAt(0).Key;
 
         }
         
-        localdesirs.Remove(distancesDesirs.ElementAt(0).Key);
-        if(localdesirs.Count != 0)
+        localintentions.Remove(distancesIntentions.ElementAt(0).Key);
+        if(localintentions.Count != 0)
         {
-            distancesDesirs = new Dictionary<Case, double>();
-            for(int i=0; i<localdesirs.Count; i++)
+            distancesIntentions = new Dictionary<Case, double>();
+            for(int i=0; i<localintentions.Count; i++)
             {
-                double dist = ManhattanDist(localdesirs[i], selecteddesir.x, selecteddesir.y);
-                distancesDesirs.Add(localdesirs[i], dist );
+                double dist = ManhattanDist(localintentions[i], selecteddesir.x, selecteddesir.y);
+                distancesIntentions.Add(localintentions[i], dist );
             }
-            distancesDesirs = distancesDesirs.OrderBy(x => x.Value).ToDictionary(x => x.Key, x => x.Value);
-            distaceminbisbis = distancesDesirs.ElementAt(0).Value;
+            distancesIntentions = distancesIntentions.OrderBy(x => x.Value).ToDictionary(x => x.Key, x => x.Value);
+            distaceminbisbis = distancesIntentions.ElementAt(0).Value;
         }
         
 
@@ -600,7 +627,7 @@ class Graph
         // Vérifie si - pour un des nodes de l'etage - toutes les cases ont été visité
         for (int i =0; i<etage.Count; i++)
         {
-            if(etage[i].desirs.Count == 0)
+            if(etage[i].intentions.Count == 0)
             {
                 return etage[i];
             }
@@ -685,7 +712,7 @@ class Node
     public List<Node> enfants;
     public Node parent;
     public int[] valeur;
-    public List<Case> desirs;
+    public List<Case> intentions;
 
 
     public Node(int x, int y, Node parent)
@@ -694,36 +721,36 @@ class Node
         this.parent = parent;
 
         this.valeur = new int[] {x,y};
-        this.desirs = parent.desirs.ToList();
+        this.intentions = parent.intentions.ToList();
 
-        int index = desirCheck(parent.desirs.ToList());  // si le noeud créer fait parti des désirs, on le retire de la liste
+        int index = desirCheck(parent.intentions.ToList());  // si le noeud créer fait parti des désirs, on le retire de la liste
         if (index!=-1)
         {
-            desirs.RemoveAt(index);
+            intentions.RemoveAt(index);
         }
     }
 
-    public Node(int x, int y, List<Case> desirs) //constructeur pour le premier Node, qui n'a pas de parent
+    public Node(int x, int y, List<Case> intentions) //constructeur pour le premier Node, qui n'a pas de parent
     {
         this.enfants = new List<Node>();
         this.parent = null;
         
         this.valeur = new int[] {x,y};
-        this.desirs = desirs;
+        this.intentions = intentions;
 
-        int index = desirCheck(desirs);
+        int index = desirCheck(intentions);
         if (index!=-1)
         {
-            desirs.RemoveAt(index);
+            intentions.RemoveAt(index);
         }
     }
 
-    public int desirCheck(List<Case> desirsList) //permet de trouver le desir concerné s'il existe
+    public int desirCheck(List<Case> intentionsList) //permet de trouver le desir concerné s'il existe
     {
         int index  = - 1;
-        for (int i = 0; i < desirsList.Count; i++)
+        for (int i = 0; i < intentionsList.Count; i++)
         {
-            if (desirsList[i].x == valeur[0] && desirsList[i].y == valeur[1])
+            if (intentionsList[i].x == valeur[0] && intentionsList[i].y == valeur[1])
             {
                 index = i; break;
             }
