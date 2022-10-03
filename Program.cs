@@ -507,11 +507,11 @@ class Graph
     }
 
     //Fonction heuristique
-    public double heuristique(Node node, List<Case> desirActualNode) 
+    public double heuristique(Node node, List<Case> intentionActualNode) 
     {
         // retourne la distance entre start et le desir du node le plus proche !! chaque node a une liste des intentions !!
         // comme l'intention est retiré a la creation du node il ne peux pas mettre son h à 0
-        if(node.desirCheck(desirActualNode) != -1)
+        if(node.desirCheck(intentionActualNode) != -1)
         {
             return 0;
         }
@@ -531,7 +531,7 @@ class Graph
     }
 
     //Fonction heuristique profonde
-    public double heuristiqueProfonde(Node node, List<Case> desirActualNode)
+    public double heuristiqueProfonde(Node node, List<Case> intentionActualNode)
     { 
         //retrourne la distance le node et le 
         // calcule la dist avec tt les intentions et sort le plus proche
@@ -542,10 +542,10 @@ class Graph
 
         List<Case> localintentions = node.intentions.ToList();
         Dictionary<Case, double> distancesIntentions = new Dictionary<Case, double>();
-        if(node.desirCheck(desirActualNode) != -1)
+        if(node.desirCheck(intentionActualNode) != -1)
         {
             distancemin = 0;
-            selecteddesir = desirActualNode.ElementAt(node.desirCheck(desirActualNode));
+            selecteddesir = intentionActualNode.ElementAt(node.desirCheck(intentionActualNode));
 
         }
         else
@@ -598,7 +598,7 @@ class Graph
         return Math.Abs(start.x - x) + Math.Abs(start.y - y);
     }    
 
-    
+    //
     public List<Node> RemonterArbre()
     {
         Node solu = this.solution;
@@ -612,6 +612,8 @@ class Graph
         AfficherEtage(brancheSolution);
         return brancheSolution;
     }
+
+    //
     public void AfficherEtage(List<Node> etage)
     {
         string str = "";
@@ -622,6 +624,8 @@ class Graph
         Console.WriteLine(str);
         Console.WriteLine();
     }
+
+    //
     public Node checkSolution(List<Node> etage) 
     {
         // Vérifie si - pour un des nodes de l'etage - toutes les cases ont été visité
