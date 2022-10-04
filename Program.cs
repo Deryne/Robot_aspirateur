@@ -33,7 +33,6 @@ class Case
     public bool bijoux; // Il peut y avoir un bijoux dedans
     public bool poussieres; //Il peut y avoir de la poussière dedans (aussi)
 
-    public double distance; //permet de choisir les cases à visiter en priorite
     public int x; // Permet de calculer la distance, sera utile pour A*
     public int y;
 
@@ -54,9 +53,7 @@ class Environnement
 {
     //L'environement est composé de 25 cases avec des propriétés      
     public Case[,] manoir = new Case[5, 5];
-    public double Performance; //Score de performance du robot
-    //public Aspirateur asp;
-    //public Aspirateur Asp { get { return this.asp;} set { this.asp = value;} }
+    public double performance; //Score de performance du robot
 
     //Constructeur
     public Environnement()
@@ -147,11 +144,24 @@ class Environnement
         }
     }
 
-    public void MesurePerformance()
+    public double MesurePerformance(Aspirateur aspi)
     { 
-        //Performance = Performance + nbCasesPropres - (CompteurElec / nbCasesPropres) - 1.5 * nbBijouxAspires;
-        // La formule à modifier peut-être, c'est pour avoir une base
-        //return Performance;
+        // a tte les iterations l'env va check le nombre de cases occupees pondéré par le compteur+nbbijouxaspires
+        int nbCasesVides = 0;
+        for (int i = 0; i < 5; i++)
+        {
+            for (int j = 0; j < 5; j++)
+            {
+                if (manoir[i,j].bijoux == false && manoir[i,j].poussieres == false)
+                {
+                    nbCasesVides++;
+                }
+            }
+        }
+        //aspi.effector.NbBijouxRamasses = 0;
+        //aspi.effector.NbPoussieresAspirees = 0;
+        //aspi.effector.NbBijouxAspires = 0;
+        return 5;
     }
 
     //Thread de l'environnement
@@ -160,9 +170,8 @@ class Environnement
         while (true)
         {
             this.GenererObstacles();
-            Thread.Sleep(3000);
-            MesurePerformance();
-            Thread.Sleep(2000);
+            performance = MesurePerformance(asp);
+            Thread.Sleep(5000);
         }
     }
 }
@@ -174,7 +183,6 @@ class Aspirateur
     public int posX;//Position en X
     public int posY;//Position en Y
     public int compteur_elec = 0; //Cout d'electricite
-    public int perf = 0;
     public bool exploration_informe; //True pour ida* et false pour bfs
     public static bool isRunning;
     List<Case> intentions = new List<Case>();//Liste vide des intentions de l'aspirateur
@@ -182,7 +190,7 @@ class Aspirateur
     public Capteur capteur = new Capteur();//Création d'un capteur
     public List<Node> plan;//Création d'un plan d'exécution
     public Effecteur effector = new Effecteur();//Création d'un effecteur
-
+    public int Compteur_elec { get { return this.compteur_elec; } set{this.compteur_elec = value;}}
     //Constructeur
     public Aspirateur(int param_posX, int paramPosY, bool exploration_informe)
     {
@@ -192,37 +200,49 @@ class Aspirateur
     }
 
     //Thread de l'aspirateur
+    /*
+     * la performance consiste en le nb de cases hors du plan, apprendre la meilleur freq d'exploration signifie que l'exploration prend du temps (pourquoi l'optimiser sinon)
+     * Donc pour que ca soit realiste il faut que le temps d'exploration soit superieur au temps de pause
+    */
     public void runAspi(Environnement env)
     {
-        while (true)
-        {
-            env.AfficherEnv(this);
+        int performanceMini;
+        bool manoirChanged = true;
+        while (true) { 
             this.capteur.ObserveEnv(env);
-            bool manoirChanged = this.UpdateMyState();
-            this.ChooseAnAction(manoirChanged);
-            Thread.Sleep(1500);
+            manoirChanged = this.UpdateMyState();
+            env.AfficherEnv(this);
+            this.ChooseAnAction(manoirChanged, true);
+            Thread.Sleep(1000);
         }
     }
 
     // Mets à jour les intentions
     public bool UpdateMyState() 
     {
-        bool manoirChanged = true;
+        bool manoirChanged = false;
         List<Case> intentionsTemp = intentions.ToList();
         intentions = new List<Case>();
+
         foreach(Case i in capteur.beliefs)
         {
             if(i.bijoux == true || i.poussieres == true)
             {
                 intentions.Add(i);
             }
-        }     
-        if(intentionsTemp == intentions) { manoirChanged = false;}
+        }   
+        foreach(Case c in intentions)
+        {
+            if (intentionsTemp.Contains(c) == false)
+            {
+                manoirChanged = true;
+            }
+        }
         return manoirChanged;
     }
 
     //Choisis la première intention à réaliser
-    public void ChooseAnAction(bool manoirChanged)
+    public void ChooseAnAction(bool manoirChanged, bool exploration)
     {
         // Verifie si le robot se trouve sur une case avec une intention
         int index  = - 1;
@@ -236,7 +256,7 @@ class Aspirateur
         if(index != -1)
         {
             Case actualCase = intentions[index];
-            if(actualCase.bijoux == true)
+            if (intentions[index].bijoux == true)
             {
                 effector.Rammasser(this,  actualCase);
             }
@@ -244,14 +264,18 @@ class Aspirateur
             {
                 effector.Aspirer(this, actualCase   );
             }
+            intentions.RemoveAt(index);
         }
-        else // Exploration
+        
+        if(manoirChanged == true && exploration == true)
+        {   
+            var start = DateTime.Now;
+            Graph tree = new Graph(exploration_informe, posX, posY, intentions);  // génère le graph en BFS et trouve la solution
+            plan = tree.RemonterArbre();  // remonte la solution pour trouver le prochain mouvement
+            Console.WriteLine("                                                                 "+(DateTime.Now-start).ToString());
+        }
+        if(plan !=  null && plan.Count != 0)
         {
-            if(manoirChanged == true)
-            {   
-                Graph tree = new Graph(exploration_informe, posX, posY, intentions);  // génère le graph en BFS et trouve la solution
-                plan = tree.RemonterArbre();  // remonte la solution pour trouver le prochain mouvement
-            }
             Node nexMoove = plan[plan.Count-1];
             plan.Remove(nexMoove);
 
@@ -278,6 +302,8 @@ class Aspirateur
                 }
             }
         }
+            
+        
     }
 }
 
@@ -307,14 +333,17 @@ class Capteur
                 beliefs[i, j] = env.manoir[i, j];
             }
         }
-        //performance = env.MesurePerformance();
     }
+    
 }
 
 //Classe Effecteur
 //Sert à faire agir le robot
 class Effecteur
 {
+    public int NbPoussieresAspirees = 0;
+    public int NbBijouxAspires=0;
+    public int NbBijouxRamasses=0;
     //Constructeur vide
     public Effecteur(){}
 
@@ -324,7 +353,7 @@ class Effecteur
         if (aspi.posX > 0)
         {
             aspi.posX -= 1;
-            aspi.compteur_elec -= 1;
+            aspi.Compteur_elec += 1;
         }
     }
 
@@ -334,7 +363,7 @@ class Effecteur
         if (aspi.posX < 4)
         {
             aspi.posX += 1;
-            aspi.compteur_elec -= 1;
+            aspi.Compteur_elec += 1;
         }
     }
 
@@ -344,7 +373,7 @@ class Effecteur
         if (aspi.posY > 0)
         {
             aspi.posY -= 1;
-            aspi.compteur_elec -= 1;
+            aspi.Compteur_elec += 1;
         }
     }
 
@@ -354,8 +383,7 @@ class Effecteur
         if (aspi.posY < 4)
         {
             aspi.posY += 1;
-            aspi.compteur_elec -= 1;
-            aspi.perf += 3;
+            aspi.Compteur_elec += 1;
         }
     }
 
@@ -363,9 +391,9 @@ class Effecteur
     public void Rammasser(Aspirateur aspi, Case param_case)
     {
         param_case.bijoux = false;
-        aspi.compteur_elec -= 1;
-        aspi.perf += 3;
+        aspi.Compteur_elec += 1;
         Console.WriteLine("-----------------------------------------Ramasser");
+        NbBijouxRamasses++;
     }
 
     //Aspirer une poussière
@@ -375,9 +403,13 @@ class Effecteur
         if (param_case.bijoux)
         {
             param_case.bijoux = false;
-            aspi.perf -= 9;
+            NbBijouxAspires++;
         }
-        aspi.compteur_elec -= 1;
+        else
+        {
+            NbPoussieresAspirees++;
+        }
+        aspi.compteur_elec += 1;
         Console.WriteLine("-----------------------------------------Aspirer");
     }
 
@@ -530,69 +562,6 @@ class Graph
         
     }
 
-    //Fonction heuristique profonde
-    public double heuristiqueProfonde(Node node, List<Case> intentionActualNode)
-    { 
-        //retrourne la distance le node et le 
-        // calcule la dist avec tt les intentions et sort le plus proche
-        double distancemin;
-        double distaceminbis = 0;
-        double distaceminbisbis = 0;
-        Case selecteddesir;
-
-        List<Case> localintentions = node.intentions.ToList();
-        Dictionary<Case, double> distancesIntentions = new Dictionary<Case, double>();
-        if(node.desirCheck(intentionActualNode) != -1)
-        {
-            distancemin = 0;
-            selecteddesir = intentionActualNode.ElementAt(node.desirCheck(intentionActualNode));
-
-        }
-        else
-        {
-            for(int i=0; i<localintentions.Count; i++)
-            {
-                double dist = ManhattanDist(localintentions[i], node.valeur[0], node.valeur[1]);
-                distancesIntentions.Add(localintentions[i], dist );
-            }
-            distancesIntentions = distancesIntentions.OrderBy(x => x.Value).ToDictionary(x => x.Key, x => x.Value);
-            distancemin = distancesIntentions.ElementAt(0).Value;
-            selecteddesir = distancesIntentions.ElementAt(0).Key;
-
-        }        
-
-        // trouve l'intention la plus proche de l'intention selectionnée
-        localintentions.Remove(selecteddesir);
-        if(localintentions.Count != 0)
-        {
-            distancesIntentions = new Dictionary<Case, double>();
-            for(int i=0; i<localintentions.Count; i++)
-            {
-                double dist = ManhattanDist(localintentions[i], selecteddesir.x, selecteddesir.y);
-                distancesIntentions.Add(localintentions[i], dist );
-            }
-            distancesIntentions = distancesIntentions.OrderBy(x => x.Value).ToDictionary(x => x.Key, x => x.Value);
-            distaceminbis = distancesIntentions.ElementAt(0).Value;
-            selecteddesir = distancesIntentions.ElementAt(0).Key;
-
-        }
-        
-        localintentions.Remove(distancesIntentions.ElementAt(0).Key);
-        if(localintentions.Count != 0)
-        {
-            distancesIntentions = new Dictionary<Case, double>();
-            for(int i=0; i<localintentions.Count; i++)
-            {
-                double dist = ManhattanDist(localintentions[i], selecteddesir.x, selecteddesir.y);
-                distancesIntentions.Add(localintentions[i], dist );
-            }
-            distancesIntentions = distancesIntentions.OrderBy(x => x.Value).ToDictionary(x => x.Key, x => x.Value);
-            distaceminbisbis = distancesIntentions.ElementAt(0).Value;
-        }
-        
-
-        return distaceminbis + distancemin+distaceminbisbis;
-    }
     public double ManhattanDist(Case start, int x, int y)
     {
         return Math.Abs(start.x - x) + Math.Abs(start.y - y);
