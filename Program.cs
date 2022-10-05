@@ -470,22 +470,6 @@ class Graph
                 temp.Add(child[i], f);
             }
             savedNodes.Remove(actualNode);
-            /*
-            Console.WriteLine(actualNode.valeur[0].ToString() + ";" + actualNode.valeur[1].ToString());
-            //Console.WriteLine("contains"+savedNodes.Count.ToString());
-            
-            foreach(Node a in savedNodes.Keys){
-                Node b = a;
-                while(b.parent != null)
-                {
-                    Console.Write(b.valeur[0].ToString() + ";" + b.valeur[1].ToString() + " ");
-                    b = b.parent;
-                }
-
-                Console.Write(savedNodes[a]);
-                Console.WriteLine("---------");
-            }
-            Console.WriteLine("*******");*/
 
             savedNodes = savedNodes.OrderBy(x => x.Value).ToDictionary(x => x.Key, x => x.Value);
             temp = temp.OrderBy(x => x.Value).ToDictionary(x =>x.Key, temp => temp.Value);  
@@ -597,7 +581,7 @@ class Graph
     //
     public Node checkSolution(List<Node> etage) 
     {
-        // Vérifie si - pour un des nodes de l'etage - toutes les cases ont été visité
+        // Vérifie si - pour un des nodes de l'etage - toutes les cases à visiter ont été parcourue;
         for (int i =0; i<etage.Count; i++)
         {
             if(etage[i].intentions.Count == 0)
