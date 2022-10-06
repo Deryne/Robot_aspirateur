@@ -465,7 +465,7 @@ class Graph
         {   
             for(int i=0; i<child.Count; i++)
             {
-                double f = g(child[i]) + heuristiqueProfonde(child[i], actualNode.intentions);
+                double f = g(child[i]);
                 savedNodes.Add(child[i], f);
                 temp.Add(child[i], f);
             }
