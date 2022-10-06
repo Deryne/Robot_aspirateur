@@ -10,18 +10,44 @@ public class Program
 {
     static void Main()
     {
-        Console.WriteLine("Creation Environnement vide");
+        //Console.WriteLine("Creation Environnement vide");
         Environnement env = new Environnement();
         env.GenererObstacles();
-        Aspirateur aspi = new Aspirateur(4,2, true);
-        
-        // Lance les 2 fils d'execution
-        Task task1 = Task.Factory.StartNew(() => env.runEnv(aspi));
-        Task task2 = Task.Factory.StartNew(() => aspi.runAspi(env));
+        Console.WriteLine("Choisissez une exploration (false = BFS et true = A*)");
+        string reponse = Console.ReadLine();
+        while(reponse != "false" && reponse != "true")
+        {
+            Console.WriteLine("Choisissez une exploration (false = BFS et true = A*)");
+            reponse = Console.ReadLine();
+        }
+        if(reponse == "true")
+        {
+            Console.WriteLine("Exploration informée A*");
+            Aspirateur aspi = new Aspirateur(4,2, true);
 
-        // Attend 20 secondes avant de terminer l'experience
-        Thread.Sleep(0 * 1000);
-        Console.ReadKey();
+            // Lance les 2 fils d'execution
+            Task task1 = Task.Factory.StartNew(() => env.runEnv(aspi));
+            Task task2 = Task.Factory.StartNew(() => aspi.runAspi(env));
+
+            // Attend 20 secondes avant de terminer l'experience
+            Thread.Sleep(0 * 1000);
+            Console.ReadKey();
+        }
+        if(reponse == "false")
+        {
+            Console.WriteLine("Exploration non informée BFS");
+            Aspirateur aspi = new Aspirateur(4,2, false);
+
+            // Lance les 2 fils d'execution
+            Task task1 = Task.Factory.StartNew(() => env.runEnv(aspi));
+            Task task2 = Task.Factory.StartNew(() => aspi.runAspi(env));
+
+            // Attend 20 secondes avant de terminer l'experience
+            Thread.Sleep(0 * 1000);
+            Console.ReadKey();
+        }
+        
+
     }
 }
 
@@ -105,7 +131,7 @@ class Environnement
     //Fonction qui affiche l'environnement en temps réel
     public void AfficherEnv(Aspirateur asp)
     {
-        Console.WriteLine("Affichage du terrain");
+        Console.WriteLine(":::::::::::::::::::::::::::::::::::::::::::::::::");
         for (int i = 0; i < 5; i++)
         {
             for (int j = 0; j < 5; j++)
@@ -171,7 +197,7 @@ class Environnement
         {
             this.GenererObstacles();
             performance = MesurePerformance(asp);
-            Thread.Sleep(5000);
+            Thread.Sleep(3000);
         }
     }
 }
