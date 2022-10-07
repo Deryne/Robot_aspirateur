@@ -261,7 +261,7 @@ class Aspirateur
             Case actualCase = casesCibles[index];
             if (casesCibles[index].bijoux == true)
             {
-                effector.Rammasser(this,  actualCase);
+                effector.Ramasser(this,  actualCase);
             }
             else
             {
@@ -388,7 +388,7 @@ class Effecteur
     }
 
     //Ramasser un bijoux
-    public void Rammasser(Aspirateur aspi, Case param_case)
+    public void Ramasser(Aspirateur aspi, Case param_case)
     {
         param_case.bijoux = false;
         aspi.compteur_elec += 1;
