@@ -90,7 +90,7 @@ class Environnement
     //Fonction qui génère les bijoux et les poussières
     public void GenererObstacles()
     {
-        Console.WriteLine("                                                                        Génération d'obstacles");
+        Console.WriteLine("                                                                        Génération poussières/bijoux");
         Random random = new Random();
 
         for (int i = 0; i < 5; i++)
